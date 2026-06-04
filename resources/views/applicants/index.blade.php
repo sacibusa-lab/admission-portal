@@ -97,7 +97,11 @@
                     <tbody>
                         @forelse($applicants as $applicant)
                             <tr>
-                                <td class="px-4 fw-bold text-dark">{{ $applicant->registration_number }}</td>
+                                <td class="px-4 fw-bold">
+                                    <a href="{{ route('applicants.show', $applicant->id) }}" class="link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover fw-bold text-primary">
+                                        {{ $applicant->registration_number }}
+                                    </a>
+                                </td>
                                 <td>
                                     @if($applicant->passport_path)
                                         <img src="{{ asset('storage/' . $applicant->passport_path) }}" alt="Passport" class="rounded border" style="width: 40px; height: 40px; object-fit: cover;">
@@ -107,7 +111,11 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="fw-bold text-dark">{{ $applicant->full_name }}</td>
+                                <td class="fw-bold">
+                                    <a href="{{ route('applicants.show', $applicant->id) }}" class="link-offset-2 link-underline-opacity-0 link-underline-opacity-100-hover text-dark">
+                                        {{ $applicant->full_name }}
+                                    </a>
+                                </td>
                                 <td>{{ $applicant->class_applying_for }}</td>
                                 <td>{{ $applicant->parent_phone_number }}</td>
                                 <td>
