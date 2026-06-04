@@ -4,7 +4,7 @@
     # Disable directory listing
     Options -Indexes
 
-    # Avoid directory/file search in root for sensitive files
+    # Block direct access to sensitive files in the root folder
     <FilesMatch "^(\.env|composer\.json|composer\.lock|package\.json|package-lock\.json|artisan|phpunit\.xml|vite\.config\.js)$">
         <IfModule mod_authz_core.c>
             Require all denied
@@ -15,9 +15,7 @@
         </IfModule>
     </FilesMatch>
 
-    # Avoid infinite redirect loop
-    RewriteCond %{REQUEST_URI} !^/public/
-
-    # Rewrite all requests to the public directory
+    # Only rewrite if this is the initial request (prevents infinite loops in subfolders)
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
