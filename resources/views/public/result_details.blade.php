@@ -32,14 +32,10 @@
             margin: 0 !important;
         }
 
-        .row {
-            display: block !important;
-        }
-
-        .col-12, .col-lg-8 {
+        .col-lg-8 {
             width: 100% !important;
             max-width: 100% !important;
-            flex: none !important;
+            flex: 0 0 100% !important;
         }
 
         .glass-card {
@@ -167,7 +163,7 @@
                 <div class="border-bottom pb-4 mb-4">
                     <div class="row align-items-center justify-content-between g-3">
                         <!-- Left: School Crest Logo -->
-                        <div class="col-12 col-md-2 text-center text-md-start">
+                        <div class="col-3 col-md-2 text-center text-md-start">
                             @if(\App\Models\Setting::get('school_logo'))
                                 <img src="{{ asset(\App\Models\Setting::get('school_logo')) }}" alt="School Logo" style="height: 100px; width: 100px; object-fit: contain;">
                             @else
@@ -179,7 +175,7 @@
                         </div>
 
                         <!-- Center: School Information -->
-                        <div class="col-12 col-md-8 text-center">
+                        <div class="col-6 col-md-8 text-center">
                             <h6 class="text-uppercase fw-semibold text-secondary mb-1" style="font-size: 0.85rem; letter-spacing: 1px;">
                                 Catholic Diocese of Issele-Uku
                             </h6>
@@ -195,7 +191,7 @@
                         </div>
 
                         <!-- Right: Candidate Passport Photo -->
-                        <div class="col-12 col-md-2 text-center text-md-end">
+                        <div class="col-3 col-md-2 text-center text-md-end">
                             <div class="d-inline-block p-1 bg-white border border-secondary border-opacity-25 rounded shadow-sm" style="width: 110px; height: 110px;">
                                 @if($applicant->passport_path)
                                     <img src="{{ $applicant->passport_url }}" alt="Passport" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
