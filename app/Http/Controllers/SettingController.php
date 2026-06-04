@@ -20,7 +20,27 @@ class SettingController extends Controller
         $settings = Setting::all()->pluck('value', 'key')->toArray();
         $sessions = AcademicSession::orderBy('name', 'desc')->get();
         $classes = SchoolClass::orderBy('name', 'asc')->get();
-        return view('settings.index', compact('settings', 'sessions', 'classes'));
+
+        // Get unique exam batches from applicants table
+        $existingBatches = Applicant::select('exam_batch')
+            ->distinct()
+            ->pluck('exam_batch')
+            ->filter()
+            ->toArray();
+
+        $defaultBatches = [
+            'Batch A',
+            'Batch A - Resit',
+            'Batch B',
+            'Batch B - Resit',
+            'Batch C',
+            'Batch C - Resit'
+        ];
+
+        $batches = array_unique(array_merge($defaultBatches, $existingBatches));
+        sort($batches);
+
+        return view('settings.index', compact('settings', 'sessions', 'classes', 'batches'));
     }
 
     /**
@@ -31,6 +51,9 @@ class SettingController extends Controller
         $request->validate([
             'school_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'school_favicon' => 'nullable|file|mimes:ico,png,jpg,jpeg|max:512',
+            'interview_dates' => 'nullable|array',
+            'interview_venues' => 'nullable|array',
+            'interview_instructions' => 'nullable|array',
         ]);
 
         $data = $request->validate([
@@ -67,6 +90,32 @@ class SettingController extends Controller
             }
 
             Setting::set($key, $value, $group);
+        }
+
+        // Save per-batch schedules
+        if ($request->has('interview_dates')) {
+            foreach ($request->input('interview_dates') as $batch => $date) {
+                $slug = \Illuminate\Support\Str::slug($batch);
+                if ($slug) {
+                    Setting::set("interview_date_{$slug}", $date, 'admission');
+                }
+            }
+        }
+        if ($request->has('interview_venues')) {
+            foreach ($request->input('interview_venues') as $batch => $venue) {
+                $slug = \Illuminate\Support\Str::slug($batch);
+                if ($slug) {
+                    Setting::set("interview_venue_{$slug}", $venue, 'admission');
+                }
+            }
+        }
+        if ($request->has('interview_instructions')) {
+            foreach ($request->input('interview_instructions') as $batch => $instructions) {
+                $slug = \Illuminate\Support\Str::slug($batch);
+                if ($slug) {
+                    Setting::set("interview_instructions_{$slug}", $instructions, 'admission');
+                }
+            }
         }
 
         // Handle branding files

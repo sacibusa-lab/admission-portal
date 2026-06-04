@@ -135,6 +135,13 @@
             $theme = 'secondary';
         }
     }
+
+    // Resolve batch-specific interview instructions
+    $batch = $applicant->exam_batch ?: 'Batch A';
+    $batchSlug = \Illuminate\Support\Str::slug($batch);
+    $interviewDate = \App\Models\Setting::get("interview_date_{$batchSlug}") ?: \App\Models\Setting::get('admission_interview_date', 'Saturday, July 18, 2026');
+    $interviewVenue = \App\Models\Setting::get("interview_venue_{$batchSlug}") ?: "School Main Assembly Hall, St. Augustine's College, Ibusa";
+    $interviewInstructions = \App\Models\Setting::get("interview_instructions_{$batchSlug}") ?: "Please bring printed copies of your application slip, entrance exam result sheet, birth certificate, and previous school reports.";
 @endphp
 <div class="row justify-content-center animate__animated animate__fadeIn" style="margin-top: 1rem; margin-bottom: 3rem;">
     <div class="col-12 col-lg-8">
@@ -322,14 +329,14 @@
                             <p class="mb-2 text-muted" style="font-size: 0.92rem;">You are required to attend an oral interview as part of the final registration process.</p>
                             <div class="mb-2">
                                 <span class="fw-semibold text-secondary">Date & Time:</span> 
-                                <span class="fw-bold text-primary">{{ \App\Models\Setting::get('admission_interview_date', 'Saturday, July 18, 2026') }}</span>
+                                <span class="fw-bold text-primary">{{ $interviewDate }}</span>
                             </div>
                             <div>
                                 <span class="fw-semibold text-secondary">Venue:</span> 
-                                <span class="fw-semibold text-dark">School Main Assembly Hall, St. Augustine's College, Ibusa</span>
+                                <span class="fw-semibold text-dark">{{ $interviewVenue }}</span>
                             </div>
                             <div class="mt-2 text-muted" style="font-size: 0.8rem;">
-                                Please bring printed copies of your application slip, entrance exam result sheet, birth certificate, and previous school reports.
+                                {{ $interviewInstructions }}
                             </div>
                         </div>
                     </div>

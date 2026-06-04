@@ -32,6 +32,11 @@
                                 <i class="bi bi-file-earmark-text-fill me-1"></i> Admission Letters
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold text-secondary px-3 pb-3 border-0" id="interviews-tab" data-bs-toggle="tab" data-bs-target="#interviews-pane" type="button" role="tab" aria-controls="interviews-pane" aria-selected="false">
+                                <i class="bi bi-calendar-event-fill me-1"></i> Interview Schedules
+                            </button>
+                        </li>
                     </ul>
                 </div>
                 
@@ -168,6 +173,51 @@
                                         <textarea class="form-control" name="admission_letter_template" rows="8" required>{{ $settings['admission_letter_template'] ?? '' }}</textarea>
                                         <small class="text-muted">Supported tags: <code>{firstname}</code>, <code>{surname}</code>, <code>{registration_number}</code>, <code>{class}</code>, <code>{session}</code></small>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Interview Schedules -->
+                            <div class="tab-pane fade" id="interviews-pane" role="tabpanel" aria-labelledby="interviews-tab" tabindex="0">
+                                <h5 class="fw-bold mb-4 text-secondary">Oral Interview Schedules by Batch</h5>
+                                <p class="text-muted mb-4">Set specific oral interview dates, venues, and instructions for each exam batch. If a batch doesn't have custom values, it will fallback to the default oral interview date.</p>
+                                
+                                <div class="accordion" id="batchInterviewAccordion">
+                                    @foreach($batches as $batch)
+                                        @php
+                                            $slug = \Illuminate\Support\Str::slug($batch);
+                                            $dateVal = $settings["interview_date_{$slug}"] ?? '';
+                                            $venueVal = $settings["interview_venue_{$slug}"] ?? '';
+                                            $instVal = $settings["interview_instructions_{$slug}"] ?? '';
+                                        @endphp
+                                        <div class="accordion-item mb-3 border rounded shadow-sm">
+                                            <h2 class="accordion-header" id="heading-{{ $slug }}">
+                                                <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $slug }}" aria-expanded="false" aria-controls="collapse-{{ $slug }}">
+                                                    <i class="bi bi-bookmark-fill text-primary me-2"></i> {{ $batch }}
+                                                </button>
+                                            </h2>
+                                            <div id="collapse-{{ $slug }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ $slug }}" data-bs-parent="#batchInterviewAccordion">
+                                                <div class="accordion-body p-4 bg-white">
+                                                    <div class="row g-3">
+                                                        <div class="col-12 col-md-6">
+                                                            <label class="form-label fw-semibold">Interview Date & Time</label>
+                                                            <input type="text" class="form-control" name="interview_dates[{{ $batch }}]" value="{{ $dateVal }}" placeholder="e.g. Saturday, July 18, 2026 at 9:00 AM">
+                                                            <small class="text-muted">Fallback: {{ $settings['admission_interview_date'] ?? 'Saturday, July 18, 2026' }}</small>
+                                                        </div>
+                                                        <div class="col-12 col-md-6">
+                                                            <label class="form-label fw-semibold">Interview Venue</label>
+                                                            <input type="text" class="form-control" name="interview_venues[{{ $batch }}]" value="{{ $venueVal }}" placeholder="e.g. School Main Assembly Hall, St. Augustine's College, Ibusa">
+                                                            <small class="text-muted">Fallback: School Main Assembly Hall, St. Augustine's College, Ibusa</small>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form-label fw-semibold">Interview Instructions</label>
+                                                            <textarea class="form-control" name="interview_instructions[{{ $batch }}]" rows="3" placeholder="e.g. Please bring printed copies of your application slip, entrance exam result sheet, birth certificate, and previous school reports.">{{ $instVal }}</textarea>
+                                                            <small class="text-muted">Fallback: Default instructions</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
