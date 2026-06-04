@@ -29,15 +29,18 @@ Route::get('/check-results/details', [PublicResultController::class, 'showDetail
 Route::get('/check-results/letter/{id}', [PublicResultController::class, 'downloadLetter'])->name('public.results.letter');
 Route::post('/check-results/resit/{id}', [PublicResultController::class, 'registerResit'])->name('public.results.resit');
 
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('public.results.form');
+})->name('home');
+
 // 3. Authenticated Portal Routes
 Route::middleware('auth')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Dashboard root redirect
-    Route::get('/', function () {
-        return redirect()->route('dashboard');
-    });
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // General applicant access (viewing profiles is available to all roles)
