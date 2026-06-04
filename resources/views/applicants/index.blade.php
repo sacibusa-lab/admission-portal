@@ -142,6 +142,16 @@
                                                     <i class="bi bi-pencil-fill text-secondary"></i> Edit Details
                                                 </a>
                                             </li>
+                                            <li>
+                                                <form action="{{ route('applicants.destroy', $applicant->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this applicant profile? This action will archive/soft-delete their record.');" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                                        <i class="bi bi-trash-fill text-danger"></i> Delete Profile
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
                                             @endif
                                             <li>
                                                 <a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('applicants.slip', $applicant->id) }}" target="_blank">

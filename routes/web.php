@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/applicants', [ApplicantController::class, 'store'])->name('applicants.store');
         Route::get('/applicants/{id}/edit', [ApplicantController::class, 'edit'])->name('applicants.edit');
         Route::put('/applicants/{id}', [ApplicantController::class, 'update'])->name('applicants.update');
+        Route::delete('/applicants/{id}', [ApplicantController::class, 'destroy'])->name('applicants.destroy');
         Route::post('/applicants/{id}/resit', [ApplicantController::class, 'registerResit'])->name('applicants.resit');
 
         // CSV Import

@@ -49,7 +49,19 @@
 
                 <!-- Action Button in Header -->
                 <div class="ms-md-auto text-center text-md-end">
-                    <div class="d-flex gap-2">
+                    <div class="d-flex flex-wrap justify-content-center justify-content-md-end gap-2">
+                        @if(auth()->user()->hasPermission('register_applicants'))
+                            <a href="{{ route('applicants.edit', $applicant->id) }}" class="btn btn-outline-light d-flex align-items-center gap-2">
+                                <i class="bi bi-pencil-fill"></i> Edit Profile
+                            </a>
+                            <form action="{{ route('applicants.destroy', $applicant->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this applicant profile? This action will archive/soft-delete their record.');" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger d-flex align-items-center gap-2">
+                                    <i class="bi bi-trash-fill"></i> Delete Profile
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('applicants.slip', $applicant->id) }}" target="_blank" class="btn btn-outline-light d-flex align-items-center gap-2">
                             <i class="bi bi-printer"></i> Print Slip
                         </a>

@@ -344,4 +344,23 @@ class ApplicantController extends Controller
         $applicant = Applicant::with('academicSession')->findOrFail($id);
         return view('applicants.slip', compact('applicant'));
     }
+
+    /**
+     * Delete/archive applicant profile.
+     */
+    public function destroy($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+
+        $applicant->delete();
+
+        AuditLogger::log('delete_applicant', [
+            'applicant_id' => $applicant->id,
+            'registration_number' => $applicant->registration_number,
+            'full_name' => $applicant->full_name
+        ]);
+
+        return redirect()->route('applicants.index')
+            ->with('success', "Applicant profile deleted successfully.");
+    }
 }
