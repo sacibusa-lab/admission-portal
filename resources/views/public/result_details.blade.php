@@ -162,61 +162,92 @@
         @endif
 
         <div class="glass-card">
-            <!-- Header Section -->
-            <div class="card-header bg-dark text-white p-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="fw-bold m-0">Entrance Exam Result Sheet</h4>
-                    <small class="text-white-50">Academic Session: {{ $applicant->academicSession->name }}</small>
-                </div>
-                <div>
-                    <span class="badge-status {{ $badgeClass }}">
-                        Status: {{ $displayStatus }}
-                    </span>
-                </div>
-            </div>
-
             <div class="card-body p-4 p-md-5">
-                <!-- Personal Info Grid with Passport Photo -->
-                <h5 class="fw-bold text-dark mb-3 border-bottom pb-2"><i class="bi bi-person-fill text-primary me-2"></i>Candidate Profile</h5>
-                <div class="row align-items-center mb-4">
-                    <!-- Passport Image (Col 3 on large screens) -->
-                    <div class="col-12 col-md-3 text-center mb-3 mb-md-0 order-md-2 profile-photo-container">
-                        @if($applicant->passport_path)
-                            <img src="{{ $applicant->passport_url }}" alt="Passport" class="rounded border border-3 border-light shadow-sm img-thumbnail" style="width: 130px; height: 130px; object-fit: cover;">
-                        @else
-                            <div class="rounded border border-3 border-light shadow-sm bg-light text-muted d-inline-flex align-items-center justify-content-center" style="width: 130px; height: 130px;">
-                                <i class="bi bi-person-fill fs-1" style="font-size: 3.5rem !important;"></i>
-                            </div>
-                        @endif
-                    </div>
+                <!-- Official School Letterhead Header -->
+                <div class="border-bottom pb-4 mb-4">
+                    <div class="row align-items-center justify-content-between g-3">
+                        <!-- Left: School Crest Logo -->
+                        <div class="col-12 col-md-2 text-center text-md-start">
+                            @if(\App\Models\Setting::get('school_logo'))
+                                <img src="{{ asset(\App\Models\Setting::get('school_logo')) }}" alt="School Logo" style="height: 100px; width: 100px; object-fit: contain;">
+                            @else
+                                <!-- Fallback placeholder crest if no logo uploaded -->
+                                <div class="d-inline-flex align-items-center justify-content-center bg-light text-primary rounded-circle border border-2 border-primary mx-auto" style="width: 100px; height: 100px;">
+                                    <i class="bi bi-mortarboard-fill fs-1"></i>
+                                </div>
+                            @endif
+                        </div>
 
-                    <!-- Details list (Col 9 on large screens) -->
-                    <div class="col-12 col-md-9 order-md-1">
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <div class="p-2 border-bottom border-light">
-                                    <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Full Name</span>
-                                    <span class="fw-bold text-dark text-uppercase fs-5">{{ $applicant->full_name }}</span>
-                                </div>
+                        <!-- Center: School Information -->
+                        <div class="col-12 col-md-8 text-center">
+                            <h6 class="text-uppercase fw-semibold text-secondary mb-1" style="font-size: 0.85rem; letter-spacing: 1px;">
+                                Catholic Diocese of Issele-Uku
+                            </h6>
+                            <h2 class="fw-extrabold text-dark m-0 text-uppercase" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.5px;">
+                                {{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}
+                            </h2>
+                            <p class="fw-semibold text-dark mb-1" style="font-size: 1.05rem;">
+                                {{ \App\Models\Setting::get('school_address', 'Ibusa, Delta State, Nigeria') }}
+                            </p>
+                            <p class="text-muted m-0" style="font-size: 0.82rem; font-weight: 500;">
+                                Tel: {{ \App\Models\Setting::get('school_phone', 'xxx-xxx-xxxx') }} &bull; Email: {{ \App\Models\Setting::get('school_email', 'info@saci.com.ng') }}
+                            </p>
+                        </div>
+
+                        <!-- Right: Candidate Passport Photo -->
+                        <div class="col-12 col-md-2 text-center text-md-end">
+                            <div class="d-inline-block p-1 bg-white border border-secondary border-opacity-25 rounded shadow-sm" style="width: 110px; height: 110px;">
+                                @if($applicant->passport_path)
+                                    <img src="{{ $applicant->passport_url }}" alt="Passport" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                                @else
+                                    <div class="w-100 h-100 bg-light text-muted d-flex flex-column align-items-center justify-content-center" style="border-radius: 4px;">
+                                        <i class="bi bi-person-fill fs-2 mb-0"></i>
+                                        <small style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase;">Photo</small>
+                                    </div>
+                                @endif
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="p-2 border-bottom border-light">
-                                    <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Registration Number</span>
-                                    <span class="fw-bold text-primary fs-5">{{ $applicant->registration_number }}</span>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <div class="p-2 border-bottom border-light">
-                                    <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Class Applied For</span>
-                                    <span class="fw-semibold text-dark">{{ $applicant->class_applying_for }}</span>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <div class="p-2 border-bottom border-light">
-                                    <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Parent Phone Number</span>
-                                    <span class="fw-semibold text-dark">{{ $applicant->parent_phone_number }}</span>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Sheet Title & Status Badge Bar -->
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center bg-light border rounded p-3 mb-4 gap-2">
+                    <div>
+                        <h5 class="fw-bold text-dark m-0">Entrance Exam Result Sheet</h5>
+                        <small class="text-muted">Academic Session: {{ $applicant->academicSession->name }}</small>
+                    </div>
+                    <div>
+                        <span class="badge-status {{ $badgeClass }} py-2 px-3 fs-6">
+                            Status: {{ $displayStatus }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Personal Info Grid -->
+                <h5 class="fw-bold text-dark mb-3 border-bottom pb-2"><i class="bi bi-person-fill text-primary me-2"></i>Candidate Profile</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <div class="p-2 border-bottom border-light">
+                            <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Full Name</span>
+                            <span class="fw-bold text-dark text-uppercase fs-5">{{ $applicant->full_name }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-2 border-bottom border-light">
+                            <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Registration Number</span>
+                            <span class="fw-bold text-primary fs-5">{{ $applicant->registration_number }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-2 border-bottom border-light">
+                            <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Class Applied For</span>
+                            <span class="fw-semibold text-dark">{{ $applicant->class_applying_for }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-2 border-bottom border-light">
+                            <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">Parent Phone Number</span>
+                            <span class="fw-semibold text-dark">{{ $applicant->parent_phone_number }}</span>
                         </div>
                     </div>
                 </div>
