@@ -240,9 +240,20 @@
                                                 <td>{{ $log->phone }}</td>
                                                 <td class="text-truncate text-muted" style="max-width: 250px;" title="{{ $log->message }}">{{ $log->message }}</td>
                                                 <td class="text-end">
-                                                    <span class="badge {{ str_contains($log->status, 'Sent') ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}">
+                                                    <span class="badge {{ str_contains($log->status, 'Sent') ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' }}"
+                                                          title="{{ is_array($log->response) || is_object($log->response) ? json_encode($log->response) : $log->response }}"
+                                                          style="cursor: help;">
                                                         {{ $log->status }}
                                                     </span>
+                                                    @if(!str_contains($log->status, 'Sent') && $log->response)
+                                                        <div class="small text-danger text-end mt-1 text-wrap" style="font-size: 0.72rem; max-width: 250px; word-break: break-word; margin-left: auto;">
+                                                            @if(is_array($log->response))
+                                                                <strong>Error:</strong> {{ $log->response['error'] ?? $log->response['message'] ?? json_encode($log->response) }}
+                                                            @else
+                                                                <strong>Error:</strong> {{ $log->response }}
+                                                            @endif
+                                                        </div>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty
