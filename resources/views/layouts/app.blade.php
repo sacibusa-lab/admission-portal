@@ -348,6 +348,15 @@
                     <span>Batch Score Entry</span>
                 </a>
             </li>
+            
+            @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']))
+            <li class="sidebar-item">
+                <a href="{{ route('sms.index') }}" class="sidebar-link {{ Route::is('sms.*') ? 'active' : '' }}">
+                    <i class="bi bi-chat-left-text-fill"></i>
+                    <span>SMS Center</span>
+                </a>
+            </li>
+            @endif
 
             @if(auth()->user()->hasRole(['Principal', 'Super Admin']))
             <li class="sidebar-item">

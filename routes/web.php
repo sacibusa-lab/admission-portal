@@ -13,6 +13,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExamScoreController;
 use App\Http\Controllers\PublicResultController;
+use App\Http\Controllers\SmsController;
 
 // 1. Guest Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -80,6 +81,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/exams/subjects', [ExamScoreController::class, 'subjectsStore'])->name('exams.subjects.store');
         Route::delete('/exams/subjects/{id}', [ExamScoreController::class, 'subjectsDestroy'])->name('exams.subjects.destroy');
         Route::post('/exams/scores', [ExamScoreController::class, 'scoresStore'])->name('exams.scores.store');
+
+        // SMS logs and batch messaging
+        Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
+        Route::post('/sms/{id}/resend', [SmsController::class, 'resend'])->name('sms.resend');
+        Route::get('/sms/batch', [SmsController::class, 'showBatchForm'])->name('sms.batch.form');
+        Route::post('/sms/batch', [SmsController::class, 'sendBatch'])->name('sms.batch.send');
     });
 
     // Principal + Super Admin + Admission Officer (with status updates checking roles internally)
