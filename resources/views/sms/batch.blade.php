@@ -29,6 +29,7 @@
                             <select class="form-select @error('target') is-invalid @enderror" name="target" id="smsTarget" required>
                                 <option value="">Select Target Cohort...</option>
                                 <option value="all" data-count="{{ $totalApplicants }}">All Candidates ({{ $totalApplicants }} recipients)</option>
+                                <option value="individual" data-count="0">Single/Individual Candidate</option>
                                 <optgroup label="Filter by Exam Batch">
                                     @foreach($batches as $batch)
                                         <option value="{{ $batch }}" data-count="{{ $batchCounts[$batch] ?? 0 }}">
@@ -43,6 +44,20 @@
                             @error('target')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <!-- Individual Applicant Search (Shown only when target is "individual") -->
+                        <div class="mb-4 d-none position-relative" id="individualSearchGroup">
+                            <label class="form-label fw-bold text-dark">Select Candidate</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person-search"></i></span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="applicantSearchInput" placeholder="Type candidate name or registration number to search..." autocomplete="off">
+                            </div>
+                            <input type="hidden" name="applicant_id" id="selectedApplicantId">
+                            
+                            <div class="list-group position-absolute shadow w-100 mt-1 d-none" id="searchResults" style="max-height: 250px; overflow-y: auto; z-index: 1050;">
+                                <!-- Dynamic results -->
+                            </div>
                         </div>
 
                         <!-- Message Body -->
@@ -120,17 +135,98 @@ document.addEventListener('DOMContentLoaded', function() {
     const recipientCountSpan = document.getElementById('recipientCount');
     const submitBtn = document.getElementById('submitBtn');
 
+    // Autocomplete elements
+    const searchInput = document.getElementById('applicantSearchInput');
+    const searchResults = document.getElementById('searchResults');
+    const selectedIdInput = document.getElementById('selectedApplicantId');
+
+    // Load PHP applicants list into JavaScript array
+    const applicants = @json($applicantsList);
+
     // Handle recipient selection changes
     targetSelect.addEventListener('change', function() {
+        const val = targetSelect.value;
         const selectedOption = targetSelect.options[targetSelect.selectedIndex];
-        const count = selectedOption.getAttribute('data-count') || 0;
         
-        recipientCountSpan.innerText = count;
-
-        if (targetSelect.value && count > 0) {
-            submitBtn.removeAttribute('disabled');
-        } else {
+        if (val === 'individual') {
+            document.getElementById('individualSearchGroup').classList.remove('d-none');
+            recipientCountSpan.innerText = '0';
             submitBtn.setAttribute('disabled', 'true');
+            // Clear previous searches
+            searchInput.value = '';
+            selectedIdInput.value = '';
+        } else {
+            document.getElementById('individualSearchGroup').classList.add('d-none');
+            const count = selectedOption.getAttribute('data-count') || 0;
+            recipientCountSpan.innerText = count;
+
+            if (val && count > 0) {
+                submitBtn.removeAttribute('disabled');
+            } else {
+                submitBtn.setAttribute('disabled', 'true');
+            }
+        }
+    });
+
+    // Handle typing in autocomplete search input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        searchResults.innerHTML = '';
+        
+        if (query.length < 1) {
+            searchResults.classList.add('d-none');
+            selectedIdInput.value = '';
+            recipientCountSpan.innerText = '0';
+            submitBtn.setAttribute('disabled', 'true');
+            return;
+        }
+
+        // Filter applicants locally
+        const matches = applicants.filter(app => {
+            const fullName = `${app.surname} ${app.first_name} ${app.other_name || ''}`.toLowerCase();
+            const regNo = app.registration_number.toLowerCase();
+            return fullName.includes(query) || regNo.includes(query);
+        }).slice(0, 10); // limit to 10 results for performance
+
+        if (matches.length === 0) {
+            searchResults.innerHTML = '<div class="list-group-item text-muted">No candidates found</div>';
+            searchResults.classList.remove('d-none');
+            selectedIdInput.value = '';
+            recipientCountSpan.innerText = '0';
+            submitBtn.setAttribute('disabled', 'true');
+            return;
+        }
+
+        matches.forEach(app => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action text-start d-flex justify-content-between align-items-center';
+            const otherName = app.other_name ? ' ' + app.other_name : '';
+            const fullName = `${app.surname} ${app.first_name}${otherName}`;
+            btn.innerHTML = `
+                <div>
+                    <strong class="text-dark d-block">${fullName}</strong>
+                    <span class="text-muted small">${app.registration_number}</span>
+                </div>
+                <span class="badge bg-light border text-secondary">${app.parent_phone_number || 'No Phone'}</span>
+            `;
+            
+            btn.addEventListener('click', function() {
+                searchInput.value = `${fullName} (${app.registration_number})`;
+                selectedIdInput.value = app.id;
+                searchResults.classList.add('d-none');
+                recipientCountSpan.innerText = '1';
+                submitBtn.removeAttribute('disabled');
+            });
+            searchResults.appendChild(btn);
+        });
+        searchResults.classList.remove('d-none');
+    });
+
+    // Hide search results on clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchResults.contains(e.target) && e.target !== searchInput) {
+            searchResults.classList.add('d-none');
         }
     });
 

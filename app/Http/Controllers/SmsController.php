@@ -99,7 +99,12 @@ class SmsController extends Controller
 
         $totalApplicants = Applicant::count();
 
-        return view('sms.batch', compact('batches', 'batchCounts', 'totalApplicants'));
+        // Fetch all applicants for individual lookup
+        $applicantsList = Applicant::select('id', 'surname', 'first_name', 'other_name', 'registration_number', 'parent_phone_number')
+            ->orderBy('surname', 'asc')
+            ->get();
+
+        return view('sms.batch', compact('batches', 'batchCounts', 'totalApplicants', 'applicantsList'));
     }
 
     /**
@@ -110,27 +115,38 @@ class SmsController extends Controller
         $request->validate([
             'target' => 'required|string',
             'message' => 'required|string|max:500',
+            'applicant_id' => 'required_if:target,individual|nullable|exists:applicants,id',
         ]);
 
         $target = $request->target;
         $message = $request->message;
 
-        if ($target === 'all') {
-            $applicants = Applicant::all();
-        } else {
-            $applicants = Applicant::where('exam_batch', $target)->get();
-        }
-
-        if ($applicants->isEmpty()) {
-            return redirect()->back()->with('error', 'No applicants found in the selected target.');
-        }
-
-        $count = 0;
-        foreach ($applicants as $applicant) {
+        if ($target === 'individual') {
+            $applicant = Applicant::findOrFail($request->applicant_id);
             if ($applicant->parent_phone_number) {
-                // Queue the SMS
                 $this->smsService->queue($applicant->parent_phone_number, $message);
-                $count++;
+                $count = 1;
+            } else {
+                return redirect()->back()->with('error', 'The selected applicant does not have a phone number registered.');
+            }
+        } else {
+            if ($target === 'all') {
+                $applicants = Applicant::all();
+            } else {
+                $applicants = Applicant::where('exam_batch', $target)->get();
+            }
+
+            if ($applicants->isEmpty()) {
+                return redirect()->back()->with('error', 'No applicants found in the selected target.');
+            }
+
+            $count = 0;
+            foreach ($applicants as $applicant) {
+                if ($applicant->parent_phone_number) {
+                    // Queue the SMS
+                    $this->smsService->queue($applicant->parent_phone_number, $message);
+                    $count++;
+                }
             }
         }
 
@@ -141,6 +157,6 @@ class SmsController extends Controller
         ]);
 
         return redirect()->route('sms.index')
-            ->with('success', "Successfully queued {$count} messages for dispatch in the background.");
+            ->with('success', "Successfully queued {$count} message(s) for dispatch in the background.");
     }
 }
