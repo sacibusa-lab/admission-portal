@@ -18,12 +18,20 @@ class TermiiService
         $apiKey = Setting::get('termii_api_key');
         $senderId = Setting::get('termii_sender_id', 'SAC');
 
-        // Sanitize phone number (Nigerian format: 0803... -> 234803...)
+        // Sanitize phone number (Ensure correct Nigerian prefix 234... format for Termii)
         $formattedPhone = trim($phone);
-        if (str_starts_with($formattedPhone, '0')) {
-            $formattedPhone = '234' . substr($formattedPhone, 1);
-        } elseif (str_starts_with($formattedPhone, '+')) {
+        $formattedPhone = preg_replace('/[^0-9+]/', '', $formattedPhone); // Remove spaces, dashes, etc.
+
+        if (str_starts_with($formattedPhone, '+')) {
             $formattedPhone = substr($formattedPhone, 1);
+        }
+
+        if (str_starts_with($formattedPhone, '2340')) {
+            $formattedPhone = '234' . substr($formattedPhone, 4);
+        } elseif (str_starts_with($formattedPhone, '0')) {
+            $formattedPhone = '234' . substr($formattedPhone, 1);
+        } elseif (!str_starts_with($formattedPhone, '234')) {
+            $formattedPhone = '234' . $formattedPhone;
         }
 
         if (empty($apiKey)) {
