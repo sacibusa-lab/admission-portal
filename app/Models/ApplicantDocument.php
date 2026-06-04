@@ -20,6 +20,23 @@ class ApplicantDocument extends Model
         'extracted_data' => 'array',
     ];
 
+    /**
+     * Get the document file URL.
+     */
+    public function getFileUrlAttribute(): string
+    {
+        if (!$this->file_path) {
+            return '#';
+        }
+        if (str_starts_with($this->file_path, 'uploads/')) {
+            return asset($this->file_path);
+        }
+        if (file_exists(public_path($this->file_path))) {
+            return asset($this->file_path);
+        }
+        return asset('storage/' . $this->file_path);
+    }
+
     public function applicant(): BelongsTo
     {
         return $this->belongsTo(Applicant::class);

@@ -111,10 +111,21 @@ class ApplicantController extends Controller
         // Generate reg number
         $regNumber = $this->admissionService->generateRegistrationNumber();
 
-        // Handle File Uploads (organized structure)
-        $passportPath = $request->file('passport')->store('applicants/photos', 'public');
-        $birthCertPath = $request->file('birth_certificate')->store('documents/birth_certificates', 'public');
-        $resultPath = $request->file('school_result')->store('documents/school_results', 'public');
+        // Handle File Uploads (organized structure direct to public/uploads)
+        $passportFile = $request->file('passport');
+        $passportName = 'passport_' . time() . '_' . uniqid() . '.' . $passportFile->getClientOriginalExtension();
+        $passportFile->move(public_path('uploads/photos'), $passportName);
+        $passportPath = 'uploads/photos/' . $passportName;
+
+        $birthCertFile = $request->file('birth_certificate');
+        $birthCertName = 'birth_cert_' . time() . '_' . uniqid() . '.' . $birthCertFile->getClientOriginalExtension();
+        $birthCertFile->move(public_path('uploads/documents'), $birthCertName);
+        $birthCertPath = 'uploads/documents/' . $birthCertName;
+
+        $resultFile = $request->file('school_result');
+        $resultName = 'school_result_' . time() . '_' . uniqid() . '.' . $resultFile->getClientOriginalExtension();
+        $resultFile->move(public_path('uploads/documents'), $resultName);
+        $resultPath = 'uploads/documents/' . $resultName;
 
         DB::transaction(function () use ($request, $regNumber, $currentSessionId, $passportPath, $birthCertPath, $resultPath, &$applicant) {
             $applicant = Applicant::create([
@@ -252,35 +263,56 @@ class ApplicantController extends Controller
 
         // Handle uploads
         if ($request->hasFile('passport')) {
-            $passportPath = $request->file('passport')->store('applicants/photos', 'public');
+            if ($applicant->passport_path && file_exists(public_path($applicant->passport_path))) {
+                @unlink(public_path($applicant->passport_path));
+            }
+            $file = $request->file('passport');
+            $filename = 'passport_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/photos'), $filename);
+            $passportPath = 'uploads/photos/' . $filename;
+            
             $updateData['passport_path'] = $passportPath;
             $applicant->documents()->create([
                 'document_type' => 'passport',
                 'file_path' => $passportPath,
-                'file_name' => $request->file('passport')->getClientOriginalName(),
-                'file_size' => $request->file('passport')->getSize()
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize()
             ]);
         }
 
         if ($request->hasFile('birth_certificate')) {
-            $birthCertPath = $request->file('birth_certificate')->store('documents/birth_certificates', 'public');
+            if ($applicant->birth_certificate_path && file_exists(public_path($applicant->birth_certificate_path))) {
+                @unlink(public_path($applicant->birth_certificate_path));
+            }
+            $file = $request->file('birth_certificate');
+            $filename = 'birth_cert_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/documents'), $filename);
+            $birthCertPath = 'uploads/documents/' . $filename;
+            
             $updateData['birth_certificate_path'] = $birthCertPath;
             $applicant->documents()->create([
                 'document_type' => 'birth_certificate',
                 'file_path' => $birthCertPath,
-                'file_name' => $request->file('birth_certificate')->getClientOriginalName(),
-                'file_size' => $request->file('birth_certificate')->getSize()
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize()
             ]);
         }
 
         if ($request->hasFile('school_result')) {
-            $resultPath = $request->file('school_result')->store('documents/school_results', 'public');
+            if ($applicant->school_result_path && file_exists(public_path($applicant->school_result_path))) {
+                @unlink(public_path($applicant->school_result_path));
+            }
+            $file = $request->file('school_result');
+            $filename = 'school_result_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/documents'), $filename);
+            $resultPath = 'uploads/documents/' . $filename;
+            
             $updateData['school_result_path'] = $resultPath;
             $applicant->documents()->create([
                 'document_type' => 'previous_result',
                 'file_path' => $resultPath,
-                'file_name' => $request->file('school_result')->getClientOriginalName(),
-                'file_size' => $request->file('school_result')->getSize()
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize()
             ]);
         }
 

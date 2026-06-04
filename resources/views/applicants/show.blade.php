@@ -19,7 +19,7 @@
                 <!-- Photo Thumbnail -->
                 <div>
                     @if($applicant->passport_path)
-                        <img src="{{ asset('storage/' . $applicant->passport_path) }}" alt="Passport" class="rounded border border-3 border-light shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                        <img src="{{ $applicant->passport_url }}" alt="Passport" class="rounded border border-3 border-light shadow" style="width: 120px; height: 120px; object-fit: cover;">
                     @else
                         <div class="bg-light text-muted rounded border border-3 border-light shadow d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
                             <i class="bi bi-person-fill fs-1"></i>
@@ -200,7 +200,7 @@
                                                     <small class="text-muted" style="font-size: 0.75rem;">{{ round($doc->file_size / 1024) }} KB</small>
                                                 </div>
                                             </div>
-                                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm px-3 fw-semibold">
+                                            <a href="{{ $doc->file_url }}" target="_blank" class="btn btn-outline-primary btn-sm px-3 fw-semibold">
                                                 View
                                             </a>
                                         </div>

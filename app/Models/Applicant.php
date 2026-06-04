@@ -47,6 +47,57 @@ class Applicant extends Model
         return trim("{$this->surname} {$this->first_name} {$this->other_name}");
     }
 
+    /**
+     * Get applicant's passport URL.
+     */
+    public function getPassportUrlAttribute(): string
+    {
+        if (!$this->passport_path) {
+            return '';
+        }
+        if (str_starts_with($this->passport_path, 'uploads/')) {
+            return asset($this->passport_path);
+        }
+        if (file_exists(public_path($this->passport_path))) {
+            return asset($this->passport_path);
+        }
+        return asset('storage/' . $this->passport_path);
+    }
+
+    /**
+     * Get applicant's birth certificate URL.
+     */
+    public function getBirthCertificateUrlAttribute(): string
+    {
+        if (!$this->birth_certificate_path) {
+            return '#';
+        }
+        if (str_starts_with($this->birth_certificate_path, 'uploads/')) {
+            return asset($this->birth_certificate_path);
+        }
+        if (file_exists(public_path($this->birth_certificate_path))) {
+            return asset($this->birth_certificate_path);
+        }
+        return asset('storage/' . $this->birth_certificate_path);
+    }
+
+    /**
+     * Get applicant's school result URL.
+     */
+    public function getSchoolResultUrlAttribute(): string
+    {
+        if (!$this->school_result_path) {
+            return '#';
+        }
+        if (str_starts_with($this->school_result_path, 'uploads/')) {
+            return asset($this->school_result_path);
+        }
+        if (file_exists(public_path($this->school_result_path))) {
+            return asset($this->school_result_path);
+        }
+        return asset('storage/' . $this->school_result_path);
+    }
+
     public function academicSession(): BelongsTo
     {
         return $this->belongsTo(AcademicSession::class, 'academic_session_id');

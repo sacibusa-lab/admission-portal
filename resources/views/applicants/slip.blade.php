@@ -173,7 +173,7 @@
             <div class="col-4 d-flex justify-content-end align-items-start">
                 <div class="photo-box shadow-sm">
                     @if($applicant->passport_path)
-                        <img src="{{ asset('storage/' . $applicant->passport_path) }}" alt="Passport" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="{{ $applicant->passport_url }}" alt="Passport" style="width: 100%; height: 100%; object-fit: cover;">
                     @else
                         <span class="text-muted" style="font-size: 0.8rem;">Passport photo</span>
                     @endif

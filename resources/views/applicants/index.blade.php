@@ -104,7 +104,7 @@
                                 </td>
                                 <td>
                                     @if($applicant->passport_path)
-                                        <img src="{{ asset('storage/' . $applicant->passport_path) }}" alt="Passport" class="rounded border" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <img src="{{ $applicant->passport_url }}" alt="Passport" class="rounded border" style="width: 40px; height: 40px; object-fit: cover;">
                                     @else
                                         <div class="bg-light rounded border text-muted d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                             <i class="bi bi-person-fill fs-5"></i>

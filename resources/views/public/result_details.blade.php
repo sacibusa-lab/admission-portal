@@ -175,7 +175,7 @@
                     <!-- Passport Image (Col 3 on large screens) -->
                     <div class="col-12 col-md-3 text-center mb-3 mb-md-0 order-md-2 profile-photo-container">
                         @if($applicant->passport_path)
-                            <img src="{{ asset('storage/' . $applicant->passport_path) }}" alt="Passport" class="rounded border border-3 border-light shadow-sm img-thumbnail" style="width: 130px; height: 130px; object-fit: cover;">
+                            <img src="{{ $applicant->passport_url }}" alt="Passport" class="rounded border border-3 border-light shadow-sm img-thumbnail" style="width: 130px; height: 130px; object-fit: cover;">
                         @else
                             <div class="rounded border border-3 border-light shadow-sm bg-light text-muted d-inline-flex align-items-center justify-content-center" style="width: 130px; height: 130px;">
                                 <i class="bi bi-person-fill fs-1" style="font-size: 3.5rem !important;"></i>
