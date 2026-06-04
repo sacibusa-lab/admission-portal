@@ -7,8 +7,8 @@
     <title>@yield('title', 'Admission Result Checker') - {{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}</title>
     
     @if(\App\Models\Setting::get('school_favicon'))
-    <link rel="shortcut icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
-    <link rel="icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset(\App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset(\App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
     @endif
     
     <!-- Google Fonts (Outfit) -->
@@ -132,7 +132,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand d-flex align-items-center gap-2">
                 @if(\App\Models\Setting::get('school_logo'))
-                    <img src="{{ asset('storage/' . \App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px;">
+                    <img src="{{ asset(\App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px;">
                 @else
                     <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
                 @endif

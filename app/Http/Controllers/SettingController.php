@@ -72,30 +72,34 @@ class SettingController extends Controller
         // Handle branding files
         if ($request->hasFile('school_logo')) {
             $oldPath = Setting::get('school_logo');
-            if ($oldPath) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            if ($oldPath && file_exists(public_path($oldPath))) {
+                @unlink(public_path($oldPath));
             }
-            $logoPath = $request->file('school_logo')->store('branding', 'public');
-            Setting::set('school_logo', $logoPath, 'school');
+            $file = $request->file('school_logo');
+            $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('branding'), $filename);
+            Setting::set('school_logo', 'branding/' . $filename, 'school');
         } elseif ($request->has('delete_school_logo')) {
             $oldPath = Setting::get('school_logo');
-            if ($oldPath) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            if ($oldPath && file_exists(public_path($oldPath))) {
+                @unlink(public_path($oldPath));
             }
             Setting::set('school_logo', null, 'school');
         }
 
         if ($request->hasFile('school_favicon')) {
             $oldPath = Setting::get('school_favicon');
-            if ($oldPath) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            if ($oldPath && file_exists(public_path($oldPath))) {
+                @unlink(public_path($oldPath));
             }
-            $faviconPath = $request->file('school_favicon')->store('branding', 'public');
-            Setting::set('school_favicon', $faviconPath, 'school');
+            $file = $request->file('school_favicon');
+            $filename = 'favicon_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('branding'), $filename);
+            Setting::set('school_favicon', 'branding/' . $filename, 'school');
         } elseif ($request->has('delete_school_favicon')) {
             $oldPath = Setting::get('school_favicon');
-            if ($oldPath) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            if ($oldPath && file_exists(public_path($oldPath))) {
+                @unlink(public_path($oldPath));
             }
             Setting::set('school_favicon', null, 'school');
         }

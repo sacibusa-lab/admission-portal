@@ -6,8 +6,8 @@
     <title>Sign In - Admission Portal</title>
     
     @if(\App\Models\Setting::get('school_favicon'))
-    <link rel="shortcut icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
-    <link rel="icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset(\App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset(\App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
     @endif
 
     <!-- Google Fonts (Outfit) -->
@@ -128,7 +128,7 @@
         <div class="login-header">
             <div class="login-logo">
                 @if(\App\Models\Setting::get('school_logo'))
-                    <img src="{{ asset('storage/' . \App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 60px; object-fit: contain; margin-bottom: 0.5rem; border-radius: 6px;">
+                    <img src="{{ asset(\App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 60px; object-fit: contain; margin-bottom: 0.5rem; border-radius: 6px;">
                 @else
                     <i class="bi bi-mortarboard-fill"></i>
                 @endif

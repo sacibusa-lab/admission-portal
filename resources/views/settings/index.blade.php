@@ -61,7 +61,7 @@
                                         <small class="text-muted">Recommended: Square format, PNG/JPG, max 2MB.</small>
                                         @if(!empty($settings['school_logo']))
                                             <div class="mt-2 d-flex align-items-center gap-3 p-2 border rounded bg-light">
-                                                <img src="{{ asset('storage/' . $settings['school_logo']) }}" alt="School Logo" style="height: 50px; object-fit: contain;">
+                                                <img src="{{ asset($settings['school_logo']) }}" alt="School Logo" style="height: 50px; object-fit: contain;">
                                                 <div class="form-check">
                                                     <input class="form-check-input text-danger" type="checkbox" name="delete_school_logo" id="deleteLogo">
                                                     <label class="form-check-label text-danger fw-semibold" for="deleteLogo" style="font-size: 0.85rem;">
@@ -77,7 +77,7 @@
                                         <small class="text-muted">Recommended: .ico format or 32x32 PNG, max 512KB.</small>
                                         @if(!empty($settings['school_favicon']))
                                             <div class="mt-2 d-flex align-items-center gap-3 p-2 border rounded bg-light">
-                                                <img src="{{ asset('storage/' . $settings['school_favicon']) }}" alt="School Favicon" style="height: 30px; width: 30px; object-fit: contain;">
+                                                <img src="{{ asset($settings['school_favicon']) }}" alt="School Favicon" style="height: 30px; width: 30px; object-fit: contain;">
                                                 <div class="form-check">
                                                     <input class="form-check-input text-danger" type="checkbox" name="delete_school_favicon" id="deleteFavicon">
                                                     <label class="form-check-label text-danger fw-semibold" for="deleteFavicon" style="font-size: 0.85rem;">
