@@ -67,7 +67,13 @@ class TermiiService
             $responseData = $response->json();
             
             // Check success based on Termii response keys
-            $status = $response->successful() && isset($responseData['message']) && str_contains(strtolower($responseData['message']), 'ok') ? 'Sent' : 'Failed';
+            $messageLower = isset($responseData['message']) ? strtolower($responseData['message']) : '';
+            $status = $response->successful() && (
+                isset($responseData['message_id']) || 
+                str_contains($messageLower, 'sent') || 
+                str_contains($messageLower, 'success') || 
+                str_contains($messageLower, 'ok')
+            ) ? 'Sent' : 'Failed';
 
             $log = SmsLog::create([
                 'phone' => $phone,
