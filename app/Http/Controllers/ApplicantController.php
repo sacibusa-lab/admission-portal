@@ -113,21 +113,27 @@ class ApplicantController extends Controller
 
         // Handle File Uploads (organized structure direct to public/uploads)
         $passportFile = $request->file('passport');
+        $passportSize = $passportFile->getSize();
+        $passportOrigName = $passportFile->getClientOriginalName();
         $passportName = 'passport_' . time() . '_' . uniqid() . '.' . $passportFile->getClientOriginalExtension();
         $passportFile->move(public_path('uploads/photos'), $passportName);
         $passportPath = 'uploads/photos/' . $passportName;
 
         $birthCertFile = $request->file('birth_certificate');
+        $birthCertSize = $birthCertFile->getSize();
+        $birthCertOrigName = $birthCertFile->getClientOriginalName();
         $birthCertName = 'birth_cert_' . time() . '_' . uniqid() . '.' . $birthCertFile->getClientOriginalExtension();
         $birthCertFile->move(public_path('uploads/documents'), $birthCertName);
         $birthCertPath = 'uploads/documents/' . $birthCertName;
 
         $resultFile = $request->file('school_result');
+        $resultSize = $resultFile->getSize();
+        $resultOrigName = $resultFile->getClientOriginalName();
         $resultName = 'school_result_' . time() . '_' . uniqid() . '.' . $resultFile->getClientOriginalExtension();
         $resultFile->move(public_path('uploads/documents'), $resultName);
         $resultPath = 'uploads/documents/' . $resultName;
 
-        DB::transaction(function () use ($request, $regNumber, $currentSessionId, $passportPath, $birthCertPath, $resultPath, &$applicant) {
+        DB::transaction(function () use ($request, $regNumber, $currentSessionId, $passportPath, $birthCertPath, $resultPath, $passportSize, $passportOrigName, $birthCertSize, $birthCertOrigName, $resultSize, $resultOrigName, &$applicant) {
             $applicant = Applicant::create([
                 'registration_number' => $regNumber,
                 'surname' => $request->surname,
@@ -162,22 +168,22 @@ class ApplicantController extends Controller
             $applicant->documents()->create([
                 'document_type' => 'passport',
                 'file_path' => $passportPath,
-                'file_name' => $request->file('passport')->getClientOriginalName(),
-                'file_size' => $request->file('passport')->getSize()
+                'file_name' => $passportOrigName,
+                'file_size' => $passportSize
             ]);
 
             $applicant->documents()->create([
                 'document_type' => 'birth_certificate',
                 'file_path' => $birthCertPath,
-                'file_name' => $request->file('birth_certificate')->getClientOriginalName(),
-                'file_size' => $request->file('birth_certificate')->getSize()
+                'file_name' => $birthCertOrigName,
+                'file_size' => $birthCertSize
             ]);
 
             $applicant->documents()->create([
                 'document_type' => 'previous_result',
                 'file_path' => $resultPath,
-                'file_name' => $request->file('school_result')->getClientOriginalName(),
-                'file_size' => $request->file('school_result')->getSize()
+                'file_name' => $resultOrigName,
+                'file_size' => $resultSize
             ]);
         });
 
@@ -267,6 +273,8 @@ class ApplicantController extends Controller
                 @unlink(public_path($applicant->passport_path));
             }
             $file = $request->file('passport');
+            $fileSize = $file->getSize();
+            $origName = $file->getClientOriginalName();
             $filename = 'passport_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/photos'), $filename);
             $passportPath = 'uploads/photos/' . $filename;
@@ -275,8 +283,8 @@ class ApplicantController extends Controller
             $applicant->documents()->create([
                 'document_type' => 'passport',
                 'file_path' => $passportPath,
-                'file_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize()
+                'file_name' => $origName,
+                'file_size' => $fileSize
             ]);
         }
 
@@ -285,6 +293,8 @@ class ApplicantController extends Controller
                 @unlink(public_path($applicant->birth_certificate_path));
             }
             $file = $request->file('birth_certificate');
+            $fileSize = $file->getSize();
+            $origName = $file->getClientOriginalName();
             $filename = 'birth_cert_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/documents'), $filename);
             $birthCertPath = 'uploads/documents/' . $filename;
@@ -293,8 +303,8 @@ class ApplicantController extends Controller
             $applicant->documents()->create([
                 'document_type' => 'birth_certificate',
                 'file_path' => $birthCertPath,
-                'file_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize()
+                'file_name' => $origName,
+                'file_size' => $fileSize
             ]);
         }
 
@@ -303,6 +313,8 @@ class ApplicantController extends Controller
                 @unlink(public_path($applicant->school_result_path));
             }
             $file = $request->file('school_result');
+            $fileSize = $file->getSize();
+            $origName = $file->getClientOriginalName();
             $filename = 'school_result_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/documents'), $filename);
             $resultPath = 'uploads/documents/' . $filename;
@@ -311,8 +323,8 @@ class ApplicantController extends Controller
             $applicant->documents()->create([
                 'document_type' => 'previous_result',
                 'file_path' => $resultPath,
-                'file_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize()
+                'file_name' => $origName,
+                'file_size' => $fileSize
             ]);
         }
 
