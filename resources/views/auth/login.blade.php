@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Admission Portal</title>
     
+    @if(\App\Models\Setting::get('school_favicon'))
+    <link rel="shortcut icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    @endif
+
     <!-- Google Fonts (Outfit) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,9 +127,13 @@
     <div class="login-card">
         <div class="login-header">
             <div class="login-logo">
-                <i class="bi bi-mortarboard-fill"></i>
+                @if(\App\Models\Setting::get('school_logo'))
+                    <img src="{{ asset('storage/' . \App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 60px; object-fit: contain; margin-bottom: 0.5rem; border-radius: 6px;">
+                @else
+                    <i class="bi bi-mortarboard-fill"></i>
+                @endif
             </div>
-            <h3>St. Augustine's College</h3>
+            <h3>{{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}</h3>
             <p>Admission Management Portal</p>
         </div>
 

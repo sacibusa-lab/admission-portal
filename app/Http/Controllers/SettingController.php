@@ -28,6 +28,11 @@ class SettingController extends Controller
      */
     public function update(Request $request)
     {
+        $request->validate([
+            'school_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'school_favicon' => 'nullable|file|mimes:ico,png,jpg,jpeg|max:512',
+        ]);
+
         $data = $request->validate([
             // School Branding
             'school_name' => 'required|string|max:255',
@@ -62,6 +67,37 @@ class SettingController extends Controller
             }
 
             Setting::set($key, $value, $group);
+        }
+
+        // Handle branding files
+        if ($request->hasFile('school_logo')) {
+            $oldPath = Setting::get('school_logo');
+            if ($oldPath) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            $logoPath = $request->file('school_logo')->store('branding', 'public');
+            Setting::set('school_logo', $logoPath, 'school');
+        } elseif ($request->has('delete_school_logo')) {
+            $oldPath = Setting::get('school_logo');
+            if ($oldPath) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            Setting::set('school_logo', null, 'school');
+        }
+
+        if ($request->hasFile('school_favicon')) {
+            $oldPath = Setting::get('school_favicon');
+            if ($oldPath) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            $faviconPath = $request->file('school_favicon')->store('branding', 'public');
+            Setting::set('school_favicon', $faviconPath, 'school');
+        } elseif ($request->has('delete_school_favicon')) {
+            $oldPath = Setting::get('school_favicon');
+            if ($oldPath) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            Setting::set('school_favicon', null, 'school');
         }
 
         // Flush cached stats since the prefix or session may have changed

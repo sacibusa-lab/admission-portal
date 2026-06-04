@@ -6,6 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admission Portal') - {{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}</title>
     
+    @if(\App\Models\Setting::get('school_favicon'))
+    <link rel="shortcut icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    @endif
+    
     <!-- Google Fonts (Outfit) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -289,7 +294,11 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
+            @if(\App\Models\Setting::get('school_logo'))
+                <img src="{{ asset('storage/' . \App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px;">
+            @else
+                <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
+            @endif
             <div>
                 <h5>SAC Portal</h5>
                 <small style="font-size: 0.7rem; color: #94a3b8;">Admission Management</small>

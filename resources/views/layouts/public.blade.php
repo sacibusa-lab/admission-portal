@@ -6,6 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admission Result Checker') - {{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}</title>
     
+    @if(\App\Models\Setting::get('school_favicon'))
+    <link rel="shortcut icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('storage/' . \App\Models\Setting::get('school_favicon')) }}" type="image/x-icon">
+    @endif
+    
     <!-- Google Fonts (Outfit) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,7 +131,11 @@
     <nav class="navbar navbar-dark navbar-public shadow-sm">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand d-flex align-items-center gap-2">
-                <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
+                @if(\App\Models\Setting::get('school_logo'))
+                    <img src="{{ asset('storage/' . \App\Models\Setting::get('school_logo')) }}" alt="Logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px;">
+                @else
+                    <i class="bi bi-mortarboard-fill text-warning fs-3"></i>
+                @endif
                 <div class="navbar-brand-text">
                     {{ \App\Models\Setting::get('school_name', "St. Augustine's College") }}
                 </div>

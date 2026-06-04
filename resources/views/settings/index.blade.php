@@ -35,7 +35,7 @@
                     </ul>
                 </div>
                 
-                <form action="{{ route('settings.update') }}" method="POST">
+                <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="card-body p-4">
                         <div class="tab-content" id="settingsTabContent">
@@ -54,6 +54,38 @@
                                     <div class="col-12 col-md-6">
                                         <label class="form-label fw-semibold">Contact Phone</label>
                                         <input type="text" class="form-control" name="school_phone" value="{{ $settings['school_phone'] ?? '' }}" required>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label fw-semibold">School Logo</label>
+                                        <input type="file" class="form-control" name="school_logo" accept="image/*">
+                                        <small class="text-muted">Recommended: Square format, PNG/JPG, max 2MB.</small>
+                                        @if(!empty($settings['school_logo']))
+                                            <div class="mt-2 d-flex align-items-center gap-3 p-2 border rounded bg-light">
+                                                <img src="{{ asset('storage/' . $settings['school_logo']) }}" alt="School Logo" style="height: 50px; object-fit: contain;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input text-danger" type="checkbox" name="delete_school_logo" id="deleteLogo">
+                                                    <label class="form-check-label text-danger fw-semibold" for="deleteLogo" style="font-size: 0.85rem;">
+                                                        Remove Logo
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label fw-semibold">School Favicon</label>
+                                        <input type="file" class="form-control" name="school_favicon" accept=".ico,.png,.jpg,.jpeg">
+                                        <small class="text-muted">Recommended: .ico format or 32x32 PNG, max 512KB.</small>
+                                        @if(!empty($settings['school_favicon']))
+                                            <div class="mt-2 d-flex align-items-center gap-3 p-2 border rounded bg-light">
+                                                <img src="{{ asset('storage/' . $settings['school_favicon']) }}" alt="School Favicon" style="height: 30px; width: 30px; object-fit: contain;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input text-danger" type="checkbox" name="delete_school_favicon" id="deleteFavicon">
+                                                    <label class="form-check-label text-danger fw-semibold" for="deleteFavicon" style="font-size: 0.85rem;">
+                                                        Remove Favicon
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold">School Address</label>
