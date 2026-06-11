@@ -406,5 +406,21 @@ class ApplicantController extends Controller
 
         return redirect()->route('applicants.index')
             ->with('success', "Applicant profile deleted successfully.");
+
+    /**
+     * Provide search suggestions for live autocomplete.
+     */
+    public function searchSuggestions(Request $request)
+    {
+        $term = $request->query('query');
+        if (!$term) {
+            return response()->json([]);
+        }
+        $applicants = Applicant::where('registration_number', 'like', "%{$term}%")
+            ->orWhere('full_name', 'like', "%{$term}%")
+            ->orWhere('parent_phone_number', 'like', "%{$term}%")
+            ->limit(5)
+            ->get(['id', 'full_name', 'registration_number']);
+        return response()->json($applicants);
     }
-}
+

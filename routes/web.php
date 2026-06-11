@@ -8,7 +8,6 @@ use App\Http\Controllers\CsvImportController;
 use App\Http\Controllers\OcrController;
 use App\Http\Controllers\AdmissionStatusController;
 use App\Http\Controllers\AdmissionLetterController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExamScoreController;
@@ -46,6 +45,8 @@ Route::middleware('auth')->group(function () {
 
     // General applicant access (viewing profiles is available to all roles)
     Route::get('/applicants', [ApplicantController::class, 'index'])->name('applicants.index');
+        // Live search suggestions endpoint
+        Route::get('/applicants/search-suggestions', [ApplicantController::class, 'searchSuggestions'])->name('applicants.searchSuggestions');
     Route::get('/applicants/{id}', [ApplicantController::class, 'show'])->name('applicants.show');
     Route::get('/applicants/{id}/print-slip', [ApplicantController::class, 'printSlip'])->name('applicants.slip');
 

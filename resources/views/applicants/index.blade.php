@@ -22,11 +22,12 @@
             <form action="{{ route('applicants.index') }}" method="GET" class="row g-2 align-items-end">
                 <!-- Search bar -->
                 <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold text-muted" style="font-size: 0.75rem;">Search Query</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone...">
-                    </div>
+                <label class="form-label fw-semibold text-muted" style="font-size: 0.75rem;">Search Query</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone..." autocomplete="off">
+                </div>
+                <datalist id="search-suggestions"></datalist>
                 </div>
 
                 <!-- Class Filter -->
