@@ -406,7 +406,7 @@ class ApplicantController extends Controller
 
         return redirect()->route('applicants.index')
             ->with('success', "Applicant profile deleted successfully.");
-
+}
     /**
      * Provide search suggestions for live autocomplete.
      */
