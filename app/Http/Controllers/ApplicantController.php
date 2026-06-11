@@ -406,13 +406,15 @@ class ApplicantController extends Controller
 
         return redirect()->route('applicants.index')
             ->with('success', "Applicant profile deleted successfully.");
-}
+    }
+    
+
     /**
      * Provide search suggestions for live autocomplete.
      */
     public function searchSuggestions(Request $request)
     {
-        $term = $request->query('query');
+        $term = $request->query('term');
         if (!$term) {
             return response()->json([]);
         }
@@ -423,4 +425,5 @@ class ApplicantController extends Controller
             ->get(['id', 'full_name', 'registration_number']);
         return response()->json($applicants);
     }
+
 

@@ -25,7 +25,7 @@
                 <label class="form-label fw-semibold text-muted" style="font-size: 0.75rem;">Search Query</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone..." autocomplete="off">
+                    <input type="text" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone..." autocomplete="off" list="search-suggestions">
                 </div>
                 <datalist id="search-suggestions"></datalist>
                 </div>
@@ -203,4 +203,38 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.querySelector('input[name="search"]');
+  const dataList = document.getElementById('search-suggestions');
+
+  let timer;
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    if (!query) {
+      dataList.innerHTML = '';
+      return;
+    }
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fetch(`{{ route('applicants.searchSuggestions') }}?term=` + encodeURIComponent(query))
+        .then(res => res.json())
+        .then(data => {
+          dataList.innerHTML = '';
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = `${item.full_name} (${item.registration_number})`;
+            dataList.appendChild(option);
+          });
+        });
+    }, 300);
+  });
+
+  // Optional: keep input value on selection
+  searchInput.addEventListener('change', function() {
+    // No action needed; form submission will use the typed value.
+  });
+});
+</script>
+
 @endsection
