@@ -425,5 +425,4 @@ class ApplicantController extends Controller
             ->get(['id', 'full_name', 'registration_number']);
         return response()->json($applicants);
     }
-
-
+}
