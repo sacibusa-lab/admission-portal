@@ -23,11 +23,16 @@
                 <!-- Search bar -->
                 <div class="col-12 col-md-4">
                 <label class="form-label fw-semibold text-muted" style="font-size: 0.75rem;">Search Query</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone..." autocomplete="off" list="search-suggestions">
+                <div class="position-relative">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="liveSearchInput" class="form-control border-start-0 ps-0" name="search" value="{{ request('search') }}" placeholder="Registration No, Name, or Phone..." autocomplete="off">
+                        <span class="input-group-text bg-light border-start-0" id="search-spinner">
+                            <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+                        </span>
+                    </div>
+                    <div id="live-suggestions"></div>
                 </div>
-                <datalist id="search-suggestions"></datalist>
                 </div>
 
                 <!-- Class Filter -->
@@ -203,38 +208,153 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Live search suggestion dropdown */
+#live-suggestions {
+    position: absolute;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+#live-suggestions .suggestion-item {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.15s;
+}
+#live-suggestions .suggestion-item:last-child { border-bottom: none; }
+#live-suggestions .suggestion-item:hover,
+#live-suggestions .suggestion-item.active {
+    background: #f0f4ff;
+}
+#live-suggestions .sug-name { font-weight: 600; font-size: 0.9rem; color: #1a1a2e; }
+#live-suggestions .sug-meta { font-size: 0.78rem; color: #6c757d; }
+#search-spinner { display: none; }
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.querySelector('input[name="search"]');
-  const dataList = document.getElementById('search-suggestions');
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('liveSearchInput');
+    const suggestionsBox = document.getElementById('live-suggestions');
+    const spinner = document.getElementById('search-spinner');
+    const suggestionsUrl = "{{ route('applicants.searchSuggestions') }}";
 
-  let timer;
-  searchInput.addEventListener('input', function() {
-    const query = this.value.trim();
-    if (!query) {
-      dataList.innerHTML = '';
-      return;
+    let timer = null;
+    let activeIndex = -1;
+
+    // ── Show suggestions as user types ──────────────────────────────────────
+    searchInput.addEventListener('input', function () {
+        const term = this.value.trim();
+        clearTimeout(timer);
+        activeIndex = -1;
+
+        if (term.length < 2) {
+            suggestionsBox.style.display = 'none';
+            suggestionsBox.innerHTML = '';
+            return;
+        }
+
+        spinner.style.display = 'inline-block';
+
+        timer = setTimeout(() => {
+            fetch(suggestionsUrl + '?term=' + encodeURIComponent(term))
+                .then(res => res.json())
+                .then(data => {
+                    spinner.style.display = 'none';
+                    suggestionsBox.innerHTML = '';
+
+                    if (!data.length) {
+                        suggestionsBox.style.display = 'none';
+                        return;
+                    }
+
+                    data.forEach((item, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.dataset.index = i;
+                        div.innerHTML = `
+                            <span class="sug-name">${highlight(item.full_name, term)}</span>
+                            <span class="sug-meta">${item.registration_number}</span>
+                        `;
+                        div.addEventListener('mousedown', function (e) {
+                            e.preventDefault(); // prevent blur before click registers
+                            searchInput.value = item.full_name;
+                            suggestionsBox.style.display = 'none';
+                            // Submit the form automatically
+                            searchInput.closest('form').submit();
+                        });
+                        suggestionsBox.appendChild(div);
+                    });
+
+                    suggestionsBox.style.display = 'block';
+                })
+                .catch(() => { spinner.style.display = 'none'; });
+        }, 280);
+    });
+
+    // ── Keyboard navigation ─────────────────────────────────────────────────
+    searchInput.addEventListener('keydown', function (e) {
+        const items = suggestionsBox.querySelectorAll('.suggestion-item');
+        if (!items.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            updateActive(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            updateActive(items);
+        } else if (e.key === 'Enter') {
+            if (activeIndex >= 0 && items[activeIndex]) {
+                e.preventDefault();
+                items[activeIndex].dispatchEvent(new MouseEvent('mousedown'));
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    function updateActive(items) {
+        items.forEach(el => el.classList.remove('active'));
+        if (activeIndex >= 0) {
+            items[activeIndex].classList.add('active');
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+        }
     }
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      fetch(`{{ route('applicants.searchSuggestions') }}?term=` + encodeURIComponent(query))
-        .then(res => res.json())
-        .then(data => {
-          dataList.innerHTML = '';
-          data.forEach(item => {
-            const option = document.createElement('option');
-            option.value = `${item.full_name} (${item.registration_number})`;
-            dataList.appendChild(option);
-          });
-        });
-    }, 300);
-  });
 
-  // Optional: keep input value on selection
-  searchInput.addEventListener('change', function() {
-    // No action needed; form submission will use the typed value.
-  });
+    // ── Highlight matching text ─────────────────────────────────────────────
+    function highlight(text, term) {
+        if (!text) return '';
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return text.replace(new RegExp(`(${escaped})`, 'gi'),
+            '<mark style="background:#fff3cd;padding:0;border-radius:2px;">$1</mark>');
+    }
+
+    // ── Hide on click outside ───────────────────────────────────────────────
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // ── Show suggestions again on focus if has value ────────────────────────
+    searchInput.addEventListener('focus', function () {
+        if (this.value.trim().length >= 2 && suggestionsBox.children.length) {
+            suggestionsBox.style.display = 'block';
+        }
+    });
 });
 </script>
 
 @endsection
+
