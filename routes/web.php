@@ -13,6 +13,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExamScoreController;
 use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\SmsController;
+use App\Http\Controllers\ReportController;
+
 
 // 1. Guest Authentication Routes
 Route::middleware('guest')->group(function () {
