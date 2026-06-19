@@ -35,13 +35,11 @@ return new class extends Migration
             $table->unique(['applicant_id', 'exam_subject_id', 'exam_batch'], 'exam_scores_applicant_subject_batch_unique');
         });
 
-        // Recreate foreign keys
-        Schema::table('exam_scores', function (Blueprint $table) {
-            $table->foreign('applicant_id', $fkApplicant ?: 'exam_scores_applicant_id_foreign')
-                  ->references('id')->on('applicants')->onDelete('cascade');
-            $table->foreign('exam_subject_id', $fkSubject ?: 'exam_scores_exam_subject_id_foreign')
-                  ->references('id')->on('exam_subjects')->onDelete('cascade');
-        });
+        // Recreate foreign keys using raw SQL to avoid closure scope issues
+        $fkName1 = $fkApplicant ?: 'exam_scores_applicant_id_foreign';
+        $fkName2 = $fkSubject ?: 'exam_scores_exam_subject_id_foreign';
+        DB::statement("ALTER TABLE `exam_scores` ADD CONSTRAINT `{$fkName1}` FOREIGN KEY (`applicant_id`) REFERENCES `applicants`(`id`) ON DELETE CASCADE");
+        DB::statement("ALTER TABLE `exam_scores` ADD CONSTRAINT `{$fkName2}` FOREIGN KEY (`exam_subject_id`) REFERENCES `exam_subjects`(`id`) ON DELETE CASCADE");
     }
 
     /**
@@ -72,13 +70,11 @@ return new class extends Migration
         // Restore old unique index
         DB::statement("ALTER TABLE `exam_scores` ADD UNIQUE INDEX `exam_scores_applicant_id_exam_subject_id_unique` (`applicant_id`, `exam_subject_id`)");
 
-        // Recreate foreign keys
-        Schema::table('exam_scores', function (Blueprint $table) {
-            $table->foreign('applicant_id', $fkApplicant ?: 'exam_scores_applicant_id_foreign')
-                  ->references('id')->on('applicants')->onDelete('cascade');
-            $table->foreign('exam_subject_id', $fkSubject ?: 'exam_scores_exam_subject_id_foreign')
-                  ->references('id')->on('exam_subjects')->onDelete('cascade');
-        });
+        // Recreate foreign keys using raw SQL to avoid closure scope issues
+        $fkName1 = $fkApplicant ?: 'exam_scores_applicant_id_foreign';
+        $fkName2 = $fkSubject ?: 'exam_scores_exam_subject_id_foreign';
+        DB::statement("ALTER TABLE `exam_scores` ADD CONSTRAINT `{$fkName1}` FOREIGN KEY (`applicant_id`) REFERENCES `applicants`(`id`) ON DELETE CASCADE");
+        DB::statement("ALTER TABLE `exam_scores` ADD CONSTRAINT `{$fkName2}` FOREIGN KEY (`exam_subject_id`) REFERENCES `exam_subjects`(`id`) ON DELETE CASCADE");
     }
 
     /**
