@@ -54,7 +54,7 @@ class OcrController extends Controller
         $request->validate([
             'document' => 'required|file|mimes:pdf,jpeg,jpg,png|max:5120', // Max 5MB
             'expected_students' => 'required|string', // JSON encoded array
-            'expected_subjects' => 'required|string', // JSON encoded array
+            'subject_id' => 'required|integer', // Selected subject ID
         ]);
 
         $file = $request->file('document');
@@ -69,15 +69,9 @@ class OcrController extends Controller
             ], 400);
         }
 
-        $expectedSubjects = json_decode($request->expected_subjects, true);
-        if (!is_array($expectedSubjects)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Invalid expected subjects format.'
-            ], 400);
-        }
+        $subjectId = $request->subject_id;
 
-        $result = $this->ocrService->extractScoresheet($filePath, $mimeType, $expectedStudents, $expectedSubjects, Auth::id());
+        $result = $this->ocrService->extractScoresheet($filePath, $mimeType, $expectedStudents, $subjectId, Auth::id());
 
         if ($result['success']) {
             return response()->json([

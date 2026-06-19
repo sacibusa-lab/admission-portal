@@ -52,11 +52,19 @@
                 <div class="card-body p-4">
                     <div class="row align-items-center">
                         <div class="col-12 col-lg-7">
-                            <h5 class="fw-bold text-dark mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> AI Multi-Subject Score Sheet Scanner (OCR)</h5>
-                            <p class="text-muted mb-0" style="font-size: 0.9rem;">Upload an image or PDF of the exam sheet. The AI will parse the candidate names and match scores for all subjects in columns below simultaneously.</p>
+                            <h5 class="fw-bold text-dark mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> AI Score Sheet Scanner (OCR)</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.9rem;">Upload an image or PDF of the exam sheet. The AI will parse the candidate names and match scores for the selected subject below.</p>
                         </div>
                         <div class="col-12 col-lg-5 mt-3 mt-lg-0 text-lg-end">
-                            <div class="d-flex justify-content-lg-end align-items-center gap-2">
+                            <div class="d-flex flex-column flex-lg-row justify-content-lg-end align-items-lg-center gap-2">
+                                <!-- Subject Selection -->
+                                <select class="form-select" id="scan_subject_select" style="max-width: 200px; height: 42px;">
+                                    <option value="">-- Select Subject --</option>
+                                    @foreach($subjects as $subject)
+                                        <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                                    @endforeach
+                                </select>
+                                
                                 <input type="file" id="scoresheet_file" accept=".pdf,.jpeg,.png,.jpg" class="d-none">
                                 <button type="button" class="btn btn-outline-warning fw-semibold d-flex align-items-center gap-2" onclick="document.getElementById('scoresheet_file').click()">
                                     <i class="bi bi-file-earmark-medical-fill"></i> Select Scan File
@@ -73,7 +81,7 @@
                     <div class="mt-3 d-none" id="scan_progress">
                         <div class="d-flex align-items-center gap-2 mb-2 text-warning">
                             <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <span style="font-size: 0.9rem; font-weight: 500;">Reading multi-subject score sheet and matching candidates...</span>
+                            <span style="font-size: 0.9rem; font-weight: 500;">Reading score sheet and matching candidates...</span>
                         </div>
                         <div class="progress" style="height: 6px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 100%"></div>
@@ -243,11 +251,30 @@
         });
     }
 
-    // Trigger Scanning Action
+    // Subject selection change event
+    const subjectSelect = document.getElementById('scan_subject_select');
     const scanBtn = document.getElementById('btn_scan_scoresheet');
+    if (subjectSelect) {
+        subjectSelect.addEventListener('change', function() {
+            if (scanBtn) {
+                scanBtn.disabled = !selectedFile || !this.value;
+            }
+        });
+    }
+
+    // Trigger Scanning Action
     if (scanBtn) {
         scanBtn.addEventListener('click', function() {
-            if (!selectedFile) return;
+            if (!selectedFile) {
+                alert('Please select a file to scan.');
+                return;
+            }
+            
+            const selectedSubjectId = document.getElementById('scan_subject_select')?.value;
+            if (!selectedSubjectId) {
+                alert('Please select a subject before scanning.');
+                return;
+            }
 
             const progress = document.getElementById('scan_progress');
             progress.classList.remove('d-none');
@@ -268,19 +295,10 @@
                 }
             });
 
-            // Collect expected subjects
-            const expectedSubjects = [];
-            @foreach($subjects as $sub)
-                expectedSubjects.push({
-                    id: "{{ $sub->id }}",
-                    name: "{{ $sub->name }}"
-                });
-            @endforeach
-
             const formData = new FormData();
             formData.append('document', selectedFile);
             formData.append('expected_students', JSON.stringify(expectedStudents));
-            formData.append('expected_subjects', JSON.stringify(expectedSubjects));
+            formData.append('subject_id', selectedSubjectId);
 
             fetch("{{ route('ocr.scoresheet') }}", {
                 method: 'POST',
@@ -305,19 +323,20 @@
                         const regCell = row.querySelector('.text-secondary');
                         if (regCell) {
                             const regNo = regCell.innerText.trim();
-                            const studentScores = res.data[regNo];
-                            if (studentScores) {
-                                Object.keys(studentScores).forEach(subId => {
-                                    const score = studentScores[subId];
-                                    const inputCell = row.querySelector('input[name="scores[' + row.dataset.studentId + '][' + subId + ']"]');
-                                    if (inputCell && score !== null && score !== undefined) {
-                                        inputCell.value = score;
-                                        filledCount++;
-                                    }
-                                });
-                                updateRowAverage(row);
+                            const score = res.data[regNo];
+                            if (score !== null && score !== undefined) {
+                                const inputCell = row.querySelector('input[name="scores[' + row.dataset.studentId + '][' + selectedSubjectId + ']"]');
+                                if (inputCell) {
+                                    inputCell.value = score;
+                                    filledCount++;
+                                }
                             }
                         }
+                    });
+                    
+                    // Update row averages
+                    document.querySelectorAll('tbody tr').forEach(row => {
+                        updateRowAverage(row);
                     });
 
                     alert('Scan successful! Automatically populated ' + filledCount + ' candidate score(s). Please review and save.');

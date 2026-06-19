@@ -179,9 +179,9 @@ class OCRService
     }
 
     /**
-     * Extract scores from a batch entrance exam score sheet.
+     * Extract scores from a batch entrance exam score sheet for a specific subject.
      */
-    public function extractScoresheet(string $filePath, string $mimeType, array $expectedStudents, array $expectedSubjects, int $userId): array
+    public function extractScoresheet(string $filePath, string $mimeType, array $expectedStudents, int $subjectId, int $userId): array
     {
         $apiKey = Setting::get('openrouter_api_key');
         $model = Setting::get('openrouter_model', 'google/gemini-2.5-flash');
@@ -199,57 +199,38 @@ class OCRService
             }
         }
 
+        // Get subject name for better OCR matching
+        $subject = \App\Models\ExamSubject::find($subjectId);
+        $subjectName = $subject ? $subject->name : "Subject $subjectId";
+
         if (empty($apiKey)) {
-            // Mock Mode: Generate plausible scores (e.g. between 35 and 95) for the expected students and subjects
-            $mockData = [];
-            foreach ($expectedStudents as $student) {
-                if (isset($student['registration_number'])) {
-                    $regNo = $student['registration_number'];
-                    $mockData[$regNo] = [];
-                    foreach ($expectedSubjects as $subject) {
-                        $subId = $subject['id'];
-                        $pseudoRandomScore = (crc32($regNo . '_' . $subId) % 50) + 45; // Generates scores between 45 and 95
-                        $mockData[$regNo][$subId] = $pseudoRandomScore;
-                    }
-                }
-            }
-
-            OcrLog::create([
-                'file_path' => basename($filePath) . ' (Scoresheet)',
-                'response_data' => ['mock' => true, 'info' => 'OpenRouter API Key is missing. Operating in mock mode.'],
-                'extracted_fields' => $mockData,
-                'user_id' => $userId,
-                'status' => 'Success'
-            ]);
-
             return [
-                'success' => true,
-                'mock' => true,
-                'data' => $mockData
+                'success' => false,
+                'error' => 'OpenRouter API key is not configured. Cannot process scoresheet OCR without a valid API key.'
             ];
         }
-
-        $expectedStudentsJson = json_encode($expectedStudents, JSON_PRETTY_PRINT);
-        $expectedSubjectsJson = json_encode($expectedSubjects, JSON_PRETTY_PRINT);
         
-        $prompt = "Analyze the uploaded entrance exam score sheet document/image and extract the exam scores for each of the listed candidates across the specified subjects.
-Here is the list of expected candidates (with their names and registration numbers):
-{$expectedStudentsJson}
+        $prompt = "Analyze the uploaded entrance exam score sheet document/image and extract the exam scores for the $subjectName subject.
 
-Here is the list of expected subjects (with their database IDs and names):
-{$expectedSubjectsJson}
+CRITICAL INSTRUCTIONS:
+1. Look for REGISTRATION NUMBERS on the sheet (they may be labeled as: Registration No, Reg No, Student ID, Admission No, ID Number, etc.)
+2. Find the corresponding $subjectName SCORE next to each registration number
+3. Return ONLY a valid raw JSON object mapping registration numbers to their scores
 
-Match the names/records in the score sheet with the candidates and subjects. 
-Return ONLY a valid raw JSON object. The keys must be the candidate's registration number (e.g., \"SAC-0001\"), and the value must be an object mapping the subject ID (e.g. \"1\", \"2\") to their corresponding exam score (an integer between 0 and 100).
-Example format:
+Return format:
 {
-  \"SAC-0001\": {
-    \"1\": 85,
-    \"2\": 70
-  }
+  \"SAC-0001\": 85,
+  \"SAC-0002\": 92,
+  \"SAC-0003\": 78
 }
-If a candidate has no score recorded for a subject, do not include that subject key or set its value to null.
-Do NOT wrap the JSON response in markdown blocks (no ```json). No other text, comments, or explanations.";
+
+IMPORTANT:
+- Extract ONLY pairs of (registration_number, score) that BOTH exist on the sheet
+- If a registration number has no score, skip it completely (do not include in response)
+- If a score has no registration number, skip it (do not include in response)
+- Do NOT make up or guess any data
+- Return ONLY valid JSON with registration numbers as keys and scores as values
+- No markdown blocks (no ```json), no explanations, no other text";
 
         $messages = [];
         if ($isPdf && !empty($text)) {
@@ -301,18 +282,27 @@ Do NOT wrap the JSON response in markdown blocks (no ```json). No other text, co
                 
                 $extractedData = json_decode($cleanedContent, true);
 
-                if (json_last_error() === JSON_ERROR_NONE) {
+                if (json_last_error() === JSON_ERROR_NONE && is_array($extractedData)) {
+                    // Filter: Only keep valid entries (registration_number => score)
+                    $finalData = [];
+                    foreach ($extractedData as $regNo => $score) {
+                        // Validate: score must be numeric and between 0-100
+                        if (is_numeric($score) && $score >= 0 && $score <= 100) {
+                            $finalData[$regNo] = (int)$score;
+                        }
+                    }
+
                     OcrLog::create([
-                        'file_path' => basename($filePath) . ' (Scoresheet)',
+                        'file_path' => basename($filePath) . ' (Scoresheet - ' . $subjectName . ')',
                         'response_data' => $responseData,
-                        'extracted_fields' => $extractedData,
+                        'extracted_fields' => $finalData,
                         'user_id' => $userId,
                         'status' => 'Success'
                     ]);
 
                     return [
                         'success' => true,
-                        'data' => $extractedData
+                        'data' => $finalData
                     ];
                 } else {
                     Log::error('OCR Scoresheet JSON parsing error: ' . json_last_error_msg() . ' Content: ' . $content);
@@ -320,7 +310,7 @@ Do NOT wrap the JSON response in markdown blocks (no ```json). No other text, co
             }
 
             OcrLog::create([
-                'file_path' => basename($filePath) . ' (Scoresheet)',
+                'file_path' => basename($filePath) . ' (Scoresheet - ' . $subjectName . ')',
                 'response_data' => $responseData ?: ['raw' => $response->body()],
                 'extracted_fields' => null,
                 'user_id' => $userId,
@@ -335,7 +325,7 @@ Do NOT wrap the JSON response in markdown blocks (no ```json). No other text, co
             Log::error('OCR Scoresheet Service Exception: ' . $e->getMessage());
 
             OcrLog::create([
-                'file_path' => basename($filePath) . ' (Scoresheet)',
+                'file_path' => basename($filePath) . ' (Scoresheet - ' . $subjectName . ')',
                 'response_data' => ['error' => $e->getMessage()],
                 'extracted_fields' => null,
                 'user_id' => $userId,
