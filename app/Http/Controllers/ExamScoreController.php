@@ -137,23 +137,38 @@ class ExamScoreController extends Controller
                     }
 
                     if ($score === null || $score === '') {
-                        // Delete score entry for this batch only
+                        // Delete score entry for this batch (and legacy null-batch records)
                         ExamScore::where('exam_subject_id', $subjectId)
                             ->where('applicant_id', $applicantId)
-                            ->where('exam_batch', $batch)
+                            ->where(function ($q) use ($batch) {
+                                $q->where('exam_batch', $batch)->orWhereNull('exam_batch');
+                            })
                             ->delete();
                     } else {
-                        // Update or create score for this batch
-                        ExamScore::updateOrCreate(
-                            [
-                                'exam_subject_id' => $subjectId,
-                                'applicant_id' => $applicantId,
+                        // First, migrate any legacy null-batch record to the named batch
+                        $legacy = ExamScore::where('exam_subject_id', $subjectId)
+                            ->where('applicant_id', $applicantId)
+                            ->whereNull('exam_batch')
+                            ->first();
+
+                        if ($legacy) {
+                            $legacy->update([
                                 'exam_batch' => $batch,
-                            ],
-                            [
-                                'score' => intval($score)
-                            ]
-                        );
+                                'score' => intval($score),
+                            ]);
+                        } else {
+                            // Normal upsert with the new batch-aware unique index
+                            ExamScore::updateOrCreate(
+                                [
+                                    'exam_subject_id' => $subjectId,
+                                    'applicant_id' => $applicantId,
+                                    'exam_batch' => $batch,
+                                ],
+                                [
+                                    'score' => intval($score),
+                                ]
+                            );
+                        }
                     }
                 }
             }
