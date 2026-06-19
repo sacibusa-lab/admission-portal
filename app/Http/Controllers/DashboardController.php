@@ -6,7 +6,6 @@ use App\Models\Applicant;
 use App\Models\SmsLog;
 use App\Models\AuditLog;
 use App\Services\ReportService;
-use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -22,17 +21,17 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Performance Requirement: Cache dashboard statistics
-        $stats = Cache::remember('dashboard_stats', 60, function () {
-            return [
-                'total_applicants' => Applicant::count(),
-                'applicants_today' => Applicant::whereDate('created_at', today())->count(),
-                'pending_admissions' => Applicant::where('admission_status', 'Pending')->count(),
-                'admitted_students' => Applicant::where('admission_status', 'Admitted')->count(),
-                'rejected_students' => Applicant::where('admission_status', 'Rejected')->count(),
-                'sms_sent_today' => SmsLog::whereDate('created_at', today())->where('status', 'like', 'Sent%')->count(),
-            ];
-        });
+        // Live dashboard stats (no cache for real-time accuracy)
+        $stats = [
+            'total_applicants' => Applicant::count(),
+            'applicants_today' => Applicant::whereDate('created_at', today())->count(),
+            'pending_review' => Applicant::whereIn('admission_status', ['Pending', 'Under Review'])->count(),
+            'exam_scheduled' => Applicant::where('admission_status', 'Exam Scheduled')->count(),
+            'admitted_students' => Applicant::where('admission_status', 'Admitted')->count(),
+            'failed_students' => Applicant::where('admission_status', 'Failed')->count(),
+            'rejected_students' => Applicant::where('admission_status', 'Rejected')->count(),
+            'sms_sent_today' => SmsLog::whereDate('created_at', today())->where('status', 'like', 'Sent%')->count(),
+        ];
 
         // Load chart datasets
         $classData = $this->reportService->getApplicantsByClass();

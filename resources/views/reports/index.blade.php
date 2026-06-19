@@ -18,7 +18,7 @@
 
     <!-- Summary Stats Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card h-100 border-start border-4 border-primary border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -31,7 +31,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card h-100 border-start border-4 border-success border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -53,7 +53,20 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card h-100 border-start border-4 border-danger border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Failed</span>
+                        <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($overviewStats['failed']) }}</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                        <i class="bi bi-x-circle fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl">
             <div class="card h-100 border-start border-4 border-warning border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -66,14 +79,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card h-100 border-start border-4 border-danger border-0 shadow-sm">
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card h-100 border-start border-4 border-secondary border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Rejected</span>
                         <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($overviewStats['rejected']) }}</h3>
                     </div>
-                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-3 p-3">
                         <i class="bi bi-person-x fs-4"></i>
                     </div>
                 </div>

@@ -149,6 +149,32 @@ class Applicant extends Model
     }
 
     /**
+     * Get the average exam score across all subjects.
+     */
+    public function getAverageScoreAttribute(): float
+    {
+        $scores = $this->examScores;
+        return $scores->isNotEmpty() ? round($scores->avg('score'), 1) : 0;
+    }
+
+    /**
+     * Dynamically check whether this applicant passes the cutoff.
+     * Uses loaded relations when available, falls back to a DB query.
+     */
+    public function passesCutoff(): bool
+    {
+        $cutoff = self::getCutoffForClass($this->class_applying_for);
+
+        if ($this->relationLoaded('examScores') && $this->examScores->isNotEmpty()) {
+            return $this->average_score >= $cutoff;
+        }
+
+        // Fallback: fresh query
+        $avg = $this->examScores()->avg('score');
+        return $avg !== null && round($avg, 1) >= $cutoff;
+    }
+
+    /**
      * Get the appropriate cutoff mark for a given class name.
      */
     public static function getCutoffForClass(string $class): int

@@ -112,6 +112,7 @@ class ReportService
         return [
             'total_applicants' => Applicant::count(),
             'admitted' => Applicant::where('admission_status', 'Admitted')->count(),
+            'failed' => Applicant::where('admission_status', 'Failed')->count(),
             'junior_cutoff' => (int) \App\Models\Setting::get('admission_junior_cutoff', 50),
             'senior_cutoff' => (int) \App\Models\Setting::get('admission_senior_cutoff', 50),
             'pending' => Applicant::whereIn('admission_status', ['Pending', 'Under Review'])->count(),

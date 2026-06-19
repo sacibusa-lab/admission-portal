@@ -19,7 +19,7 @@
     <!-- Stats Cards Grid -->
     <div class="row g-3 mb-4">
         <!-- Total Applicants -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
             <div class="card card-hoverable h-100 border-start border-4 border-primary">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -34,7 +34,7 @@
         </div>
 
         <!-- Applicants Today -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
             <div class="card card-hoverable h-100 border-start border-4 border-info">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -48,13 +48,13 @@
             </div>
         </div>
 
-        <!-- Pending Admissions -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+        <!-- Pending Review -->
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
             <div class="card card-hoverable h-100 border-start border-4 border-warning">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pending</span>
-                        <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['pending_admissions']) }}</h3>
+                        <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pending Review</span>
+                        <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['pending_review']) }}</h3>
                     </div>
                     <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-3">
                         <i class="bi bi-hourglass-split fs-4" style="line-height: 1;"></i>
@@ -63,8 +63,23 @@
             </div>
         </div>
 
+        <!-- Exam Scheduled -->
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
+            <div class="card card-hoverable h-100 border-start border-4 border-info">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Exam Scheduled</span>
+                        <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['exam_scheduled']) }}</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 text-info rounded-3 p-3">
+                        <i class="bi bi-calendar-check fs-4" style="line-height: 1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Admitted Students -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
             <div class="card card-hoverable h-100 border-start border-4 border-success">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
@@ -78,15 +93,30 @@
             </div>
         </div>
 
-        <!-- Rejected Students -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+        <!-- Failed -->
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
             <div class="card card-hoverable h-100 border-start border-4 border-danger">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Failed</span>
+                        <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['failed_students']) }}</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                        <i class="bi bi-x-circle fs-4" style="line-height: 1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rejected Students -->
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
+            <div class="card card-hoverable h-100 border-start border-4 border-secondary">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Rejected</span>
                         <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['rejected_students']) }}</h3>
                     </div>
-                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-3 p-3">
                         <i class="bi bi-person-x fs-4" style="line-height: 1;"></i>
                     </div>
                 </div>
@@ -94,14 +124,14 @@
         </div>
 
         <!-- SMS Sent Today -->
-        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
-            <div class="card card-hoverable h-100 border-start border-4 border-secondary">
+        <div class="col-12 col-sm-6 col-xl-3 col-xxl-3">
+            <div class="card card-hoverable h-100 border-start border-4 border-dark">
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">SMS Logs Today</span>
                         <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($stats['sms_sent_today']) }}</h3>
                     </div>
-                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-3 p-3">
+                    <div class="bg-dark bg-opacity-10 text-dark rounded-3 p-3">
                         <i class="bi bi-chat-left-dots fs-4" style="line-height: 1;"></i>
                     </div>
                 </div>

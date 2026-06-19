@@ -207,7 +207,7 @@ class ApplicantController extends Controller
      */
     public function show($id)
     {
-        $applicant = Applicant::with(['academicSession', 'documents', 'histories.officer', 'creator', 'updater'])
+        $applicant = Applicant::with(['academicSession', 'documents', 'histories.officer', 'creator', 'updater', 'examScores'])
             ->findOrFail($id);
 
         // Fetch logs associated with this applicant

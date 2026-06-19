@@ -15,10 +15,10 @@ class AdmissionLetterController extends Controller
      */
     public function show($id)
     {
-        $applicant = Applicant::with('academicSession')->findOrFail($id);
+        $applicant = Applicant::with(['academicSession', 'examScores'])->findOrFail($id);
 
-        if ($applicant->admission_status !== 'Admitted') {
-            return redirect()->back()->with('error', 'Admission letters can only be generated for admitted students.');
+        if (!$applicant->passesCutoff()) {
+            return redirect()->back()->with('error', 'Admission letters can only be generated for candidates who meet the cutoff mark.');
         }
 
         // Fetch template and replace placeholders
@@ -48,10 +48,10 @@ class AdmissionLetterController extends Controller
      */
     public function downloadPdf($id)
     {
-        $applicant = Applicant::with('academicSession')->findOrFail($id);
+        $applicant = Applicant::with(['academicSession', 'examScores'])->findOrFail($id);
 
-        if ($applicant->admission_status !== 'Admitted') {
-            return redirect()->back()->with('error', 'Admission letters can only be generated for admitted students.');
+        if (!$applicant->passesCutoff()) {
+            return redirect()->back()->with('error', 'Admission letters can only be generated for candidates who meet the cutoff mark.');
         }
 
         $template = Setting::get('admission_letter_template');

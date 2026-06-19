@@ -71,8 +71,8 @@ class PublicResultController extends Controller
             $cutoff = $isJunior ? $juniorCutoff : ($isSenior ? $seniorCutoff : 50);
             
             if ($averageScore >= $cutoff) {
-                // Only promote if they are not already admitted or rejected
-                if (!in_array($applicant->admission_status, ['Admitted', 'Rejected'])) {
+                // Only promote if not already admitted, rejected, or explicitly failed
+                if (!in_array($applicant->admission_status, ['Admitted', 'Rejected', 'Failed'])) {
                     $applicant->update([
                         'admission_status' => 'Admitted'
                     ]);
@@ -109,10 +109,10 @@ class PublicResultController extends Controller
             abort(403, 'Unauthorized access to admission letter.');
         }
 
-        $applicant = Applicant::with('academicSession')->findOrFail($id);
+        $applicant = Applicant::with(['academicSession', 'examScores'])->findOrFail($id);
 
-        if ($applicant->admission_status !== 'Admitted') {
-            abort(403, 'Admission letter is only available for Admitted candidates.');
+        if (!$applicant->passesCutoff()) {
+            abort(403, 'Admission letter is only available for candidates who meet the cutoff mark.');
         }
 
         // Load settings and build admission letter content

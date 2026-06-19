@@ -65,7 +65,7 @@
                         <a href="{{ route('applicants.slip', $applicant->id) }}" target="_blank" class="btn btn-outline-light d-flex align-items-center gap-2">
                             <i class="bi bi-printer"></i> Print Slip
                         </a>
-                        @if($applicant->admission_status === 'Admitted')
+                        @if($applicant->passesCutoff())
                             <a href="{{ route('letters.show', $applicant->id) }}" class="btn btn-warning fw-semibold text-dark d-flex align-items-center gap-2">
                                 <i class="bi bi-file-earmark-pdf"></i> Admission Letter
                             </a>
