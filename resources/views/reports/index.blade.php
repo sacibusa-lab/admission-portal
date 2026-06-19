@@ -9,6 +9,11 @@
             <h3 class="fw-bold text-dark m-0">Admission Reports</h3>
             <p class="text-muted m-0">Review enrollment success statistics, outbound communication metrics, and export data.</p>
         </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-warning fw-semibold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#evaluateCutoffModal">
+                <i class="bi bi-lightning-fill"></i> Evaluate Cutoff
+            </button>
+        </div>
     </div>
 
     <!-- Summary Stats Cards -->
@@ -376,6 +381,62 @@
         @endif
     </div>
 </div>
+
+<!-- Evaluate Cutoff Confirmation Modal -->
+<div class="modal fade" id="evaluateCutoffModal" tabindex="-1" aria-labelledby="evaluateCutoffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning bg-opacity-10 border-0">
+                <h5 class="modal-title fw-bold" id="evaluateCutoffModalLabel">
+                    <i class="bi bi-lightning-fill text-warning me-2"></i>Evaluate Admission Cutoff
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">This will evaluate <strong>all applicants</strong> with exam scores against the current cutoff marks:</p>
+                <div class="bg-light rounded-3 p-3 mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Junior Cutoff (JSS):</span>
+                        <span class="fw-bold text-primary">≥ {{ $overviewStats['junior_cutoff'] }}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Senior Cutoff (SS):</span>
+                        <span class="fw-bold text-success">≥ {{ $overviewStats['senior_cutoff'] }}%</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between">
+                        <span>Total applicants with scores:</span>
+                        <span class="fw-bold">{{ $overviewStats['total_applicants'] }}</span>
+                    </div>
+                </div>
+                <div class="alert alert-warning mb-0 py-2" style="font-size: 0.88rem;">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Admission statuses will be updated to <strong>Admitted</strong> or <strong>Failed</strong>.
+                    Applicants without exam scores will be skipped.
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-semibold" id="runEvaluateBtn" onclick="runCutoffEvaluation()">
+                    <i class="bi bi-play-fill"></i> Run Evaluation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="evaluateToast" class="toast border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+        <div class="toast-header">
+            <i class="bi bi-check-circle-fill text-success me-2" id="toastIcon"></i>
+            <strong class="me-auto" id="toastTitle">Evaluation Complete</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -386,6 +447,48 @@
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
     });
+
+    // ── Evaluate Cutoff ──
+    async function runCutoffEvaluation() {
+        const btn = document.getElementById('runEvaluateBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Evaluating...';
+
+        try {
+            const res = await fetch('{{ route('reports.evaluate.cutoff') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await res.json();
+
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('evaluateCutoffModal')).hide();
+
+            // Show toast
+            const toast = new bootstrap.Toast(document.getElementById('evaluateToast'));
+            document.getElementById('toastTitle').textContent = data.success ? '✅ Evaluation Complete' : '❌ Evaluation Failed';
+            document.getElementById('toastIcon').className = data.success ? 'bi bi-check-circle-fill text-success me-2' : 'bi bi-x-circle-fill text-danger me-2';
+            document.getElementById('toastMessage').textContent = data.message;
+
+            toast.show();
+
+            if (data.success) {
+                // Reload page after a short delay to reflect updated stats
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        } catch (err) {
+            document.getElementById('toastTitle').textContent = '❌ Network Error';
+            document.getElementById('toastIcon').className = 'bi bi-x-circle-fill text-danger me-2';
+            document.getElementById('toastMessage').textContent = 'Could not reach the server. Please try again.';
+            new bootstrap.Toast(document.getElementById('evaluateToast')).show();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-play-fill"></i> Run Evaluation';
+        }
+    }
 
     // ── Export trigger ──
     function triggerExport(type) {

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicSession;
+use App\Models\AdmissionHistory;
 use App\Models\Applicant;
 use App\Models\Setting;
 use App\Services\ReportService;
 use App\Helpers\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
@@ -141,5 +143,87 @@ class ReportController extends Controller
         AuditLogger::log('export_reports_pdf', ['records_count' => $applicants->count()]);
 
         return $pdf->download('applicants_report_' . date('Ymd_His') . '.pdf');
+    }
+
+    /**
+     * Bulk-evaluate all applicants against the current cutoff marks.
+     * Updates admission_status to "Admitted" or "Failed" based on total exam score.
+     */
+    public function evaluateCutoff(Request $request)
+    {
+        $juniorCutoff = (int) Setting::get('admission_junior_cutoff', 50);
+        $seniorCutoff = (int) Setting::get('admission_senior_cutoff', 50);
+        $officerId = auth()->id();
+
+        $applicants = Applicant::withSum('examScores', 'score')->get();
+        $admitted = 0;
+        $failed = 0;
+        $skipped = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($applicants as $app) {
+                $totalScore = (int) ($app->exam_scores_sum_score ?? 0);
+                
+                // Applicants with no exam scores are skipped
+                if ($app->examScores()->count() === 0) {
+                    $skipped++;
+                    continue;
+                }
+
+                $cutoff = str_starts_with($app->class_applying_for, 'JSS') ? $juniorCutoff : $seniorCutoff;
+                $newStatus = $totalScore >= $cutoff ? 'Admitted' : 'Failed';
+                $oldStatus = $app->admission_status;
+
+                // Skip if already at the target status
+                if ($oldStatus === $newStatus) {
+                    $skipped++;
+                    continue;
+                }
+
+                $app->update([
+                    'admission_status' => $newStatus,
+                    'updated_by' => $officerId,
+                ]);
+
+                AdmissionHistory::create([
+                    'applicant_id' => $app->id,
+                    'status' => $newStatus,
+                    'officer_id' => $officerId,
+                    'remarks' => "Auto-evaluated by cutoff (Score: {$totalScore}, Cutoff: {$cutoff}%)",
+                ]);
+
+                if ($newStatus === 'Admitted') {
+                    $admitted++;
+                } else {
+                    $failed++;
+                }
+            }
+
+            DB::commit();
+
+            AuditLogger::log('evaluate_cutoff', [
+                'admitted' => $admitted,
+                'failed' => $failed,
+                'skipped' => $skipped,
+                'junior_cutoff' => $juniorCutoff,
+                'senior_cutoff' => $seniorCutoff,
+            ], $officerId);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Evaluation complete: {$admitted} admitted, {$failed} failed, {$skipped} unchanged.",
+                'admitted' => $admitted,
+                'failed' => $failed,
+                'skipped' => $skipped,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Evaluation failed: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

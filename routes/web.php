@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export/csv', [ReportController::class, 'exportCsv'])->name('reports.export.csv');
         Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+        Route::post('/reports/evaluate-cutoff', [ReportController::class, 'evaluateCutoff'])->name('reports.evaluate.cutoff');
         
         // Generating admission letters
         Route::get('/applicants/{id}/letter', [AdmissionLetterController::class, 'show'])->name('letters.show');
