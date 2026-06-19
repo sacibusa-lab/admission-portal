@@ -36,8 +36,8 @@
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                            Meets Cutoff ⚡
-                            <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" title="Based on exam score ≥ cutoff mark (JSS: {{ $overviewStats['junior_cutoff'] }}%, SS: {{ $overviewStats['senior_cutoff'] }}%). Updates automatically when cutoff is changed in Settings."></i>
+                            Admitted
+                            <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" title="Applicants whose admission_status was set to 'Admitted' by the Evaluate Cutoff action (Pass ≥ cutoff mark). Cutoff: JSS ≥{{ $overviewStats['junior_cutoff'] }}%, SS ≥{{ $overviewStats['senior_cutoff'] }}%."></i>
                         </span>
                         <h3 class="fw-bold text-dark mt-1 mb-0">{{ number_format($overviewStats['admitted']) }}</h3>
                     </div>
@@ -47,7 +47,7 @@
                 </div>
                 <div class="card-footer bg-transparent border-0 pt-0 pb-2 px-3">
                     <small class="text-muted">
-                        Cutoff: JSS ≥{{ $overviewStats['junior_cutoff'] }}% &middot; SS ≥{{ $overviewStats['senior_cutoff'] }}%
+                        From Evaluate Cutoff &middot; JSS ≥{{ $overviewStats['junior_cutoff'] }}% &middot; SS ≥{{ $overviewStats['senior_cutoff'] }}%
                         <a href="{{ route('settings.index') }}" class="text-primary text-decoration-none ms-1"><i class="bi bi-gear"></i></a>
                     </small>
                 </div>
@@ -218,16 +218,16 @@
                     <h6 class="m-0 fw-bold text-dark d-flex align-items-center gap-2">
                         <i class="bi bi-trophy-fill text-warning"></i> Enrollment Conversion Metrics
                         <span class="badge bg-warning bg-opacity-10 text-dark ms-auto" style="font-size: 0.7rem;">
-                            <i class="bi bi-lightning-fill"></i> Cutoff-based
+                            <i class="bi bi-check-circle-fill"></i> From Score Entry
                         </span>
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="text-center py-3">
-                        <span class="text-muted d-block" style="font-size: 0.88rem; font-weight: 500;">SUCCESS RATE (by cutoff)</span>
+                        <span class="text-muted d-block" style="font-size: 0.88rem; font-weight: 500;">ADMISSION RATE</span>
                         <h1 class="fw-bold mt-1 text-primary" style="font-size: 3.5rem;">{{ $successStats['rate'] }}%</h1>
                         <p class="text-muted mt-2 mb-0" style="font-size: 0.9rem;">
-                            {{ $successStats['admitted'] }} students meet the cutoff out of {{ $successStats['total'] }} total applicants.
+                            {{ $successStats['admitted'] }} students admitted out of {{ $successStats['total'] }} total applicants.
                         </p>
                         <div class="d-flex justify-content-center gap-3 mt-2">
                             <small class="text-muted"><span class="badge bg-primary bg-opacity-10 text-primary">JSS ≥ {{ $successStats['junior_cutoff'] }}%</span></small>
