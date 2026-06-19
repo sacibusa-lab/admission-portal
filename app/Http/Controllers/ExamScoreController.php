@@ -86,8 +86,13 @@ class ExamScoreController extends Controller
             ->orderBy('first_name', 'asc')
             ->get();
             
-        // Load existing scores for the applicants
-        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))->get();
+        // Load existing scores for the applicants — only those matching the selected batch
+        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))
+            ->where(function ($q) use ($selectedBatch) {
+                $q->where('exam_batch', $selectedBatch)
+                  ->orWhereNull('exam_batch'); // backward compat: null = original batch
+            })
+            ->get();
         
         // Build applicant_id => [subject_id => score] nested map
         $scoresMap = [];
@@ -112,11 +117,13 @@ class ExamScoreController extends Controller
             'scores' => 'required|array',
             'scores.*' => 'required|array',
             'scores.*.*' => 'nullable|integer|min:0|max:100',
+            'batch' => 'required|string',
         ]);
 
         $scoresData = $request->scores; // applicant_id => [subject_id => score]
+        $batch = $request->batch;
 
-        DB::transaction(function () use ($scoresData) {
+        DB::transaction(function () use ($scoresData, $batch) {
             foreach ($scoresData as $applicantId => $subjectScores) {
                 // Ensure applicant exists
                 if (!Applicant::where('id', $applicantId)->exists()) {
@@ -130,16 +137,18 @@ class ExamScoreController extends Controller
                     }
 
                     if ($score === null || $score === '') {
-                        // Delete score entry if empty
+                        // Delete score entry for this batch only
                         ExamScore::where('exam_subject_id', $subjectId)
                             ->where('applicant_id', $applicantId)
+                            ->where('exam_batch', $batch)
                             ->delete();
                     } else {
-                        // Update or create score
+                        // Update or create score for this batch
                         ExamScore::updateOrCreate(
                             [
                                 'exam_subject_id' => $subjectId,
-                                'applicant_id' => $applicantId
+                                'applicant_id' => $applicantId,
+                                'exam_batch' => $batch,
                             ],
                             [
                                 'score' => intval($score)
@@ -151,6 +160,7 @@ class ExamScoreController extends Controller
         });
 
         AuditLogger::log('save_batch_exam_scores', [
+            'batch' => $batch,
             'total_students_updated' => count($scoresData)
         ]);
 
@@ -184,7 +194,11 @@ class ExamScoreController extends Controller
             ->orderBy('first_name', 'asc')
             ->get();
 
-        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))->get();
+        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))
+            ->where(function ($q) use ($batch) {
+                $q->where('exam_batch', $batch)->orWhereNull('exam_batch');
+            })
+            ->get();
         
         $scoresMap = [];
         foreach ($scores as $score) {
@@ -200,10 +214,11 @@ class ExamScoreController extends Controller
             $file = fopen('php://output', 'w');
             
             // Build CSV Header row
-            $headerRow = ['S/N', 'Registration Number', 'Surname', 'Firstname', 'Other Name', 'Class', 'Exam Batch'];
+            $headerRow = ['S/N', 'Registration Number', 'Surname', 'Firstname', 'Other Name', 'Class', 'Batch'];
             foreach ($subjects as $sub) {
                 $headerRow[] = $sub->name;
             }
+            $headerRow[] = 'Total Score';
             $headerRow[] = 'Average (%)';
             
             fputcsv($file, $headerRow);
@@ -232,6 +247,7 @@ class ExamScoreController extends Controller
                     }
                 }
 
+                $row[] = $totalScore;
                 $row[] = $subjectsGraded > 0 ? round($totalScore / $subjectsGraded, 1) : '-';
                 
                 fputcsv($file, $row);
@@ -275,7 +291,11 @@ class ExamScoreController extends Controller
             ->orderBy('first_name', 'asc')
             ->get();
 
-        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))->get();
+        $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))
+            ->where(function ($q) use ($batch) {
+                $q->where('exam_batch', $batch)->orWhereNull('exam_batch');
+            })
+            ->get();
         
         $scoresMap = [];
         foreach ($scores as $score) {

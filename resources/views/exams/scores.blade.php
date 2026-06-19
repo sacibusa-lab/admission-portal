@@ -29,9 +29,23 @@
                 <div class="col-12 col-md-4">
                     <label class="form-label fw-semibold text-muted" style="font-size: 0.75rem;">Exam Batch <span class="text-danger">*</span></label>
                     <select class="form-select" name="batch" required onchange="this.form.submit()" style="height: 42px;">
-                        @foreach(['Batch A', 'Batch B', 'Batch C', 'Resit'] as $batchOption)
-                            <option value="{{ $batchOption }}" {{ $selectedBatch === $batchOption ? 'selected' : '' }}>{{ $batchOption }}</option>
+                        @foreach(['Batch A', 'Batch B', 'Batch C', 'Resit'] as $defaultBatch)
+                            <option value="{{ $defaultBatch }}" {{ $selectedBatch === $defaultBatch ? 'selected' : '' }}>{{ $defaultBatch }}</option>
                         @endforeach
+                        @php
+                            $extraBatches = \App\Models\Applicant::whereNotNull('exam_batch')
+                                ->whereNotIn('exam_batch', ['Batch A', 'Batch B', 'Batch C', 'Resit'])
+                                ->distinct()
+                                ->orderBy('exam_batch', 'asc')
+                                ->pluck('exam_batch');
+                        @endphp
+                        @if($extraBatches->isNotEmpty())
+                            <optgroup label="Resit Batches">
+                                @foreach($extraBatches as $b)
+                                    <option value="{{ $b }}" {{ $selectedBatch === $b ? 'selected' : '' }}>{{ $b }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
                     </select>
                 </div>
 
@@ -94,6 +108,7 @@
         <!-- Batch Score Form -->
         <form action="{{ route('exams.scores.store') }}" method="POST">
             @csrf
+            <input type="hidden" name="batch" value="{{ $selectedBatch }}">
 
             <div class="card shadow-sm border-0 mb-5">
                 <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-3">

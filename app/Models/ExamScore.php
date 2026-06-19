@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExamScore extends Model
 {
-    protected $fillable = ['applicant_id', 'exam_subject_id', 'score'];
+    protected $fillable = ['applicant_id', 'exam_subject_id', 'score', 'exam_batch'];
 
     public function applicant(): BelongsTo
     {

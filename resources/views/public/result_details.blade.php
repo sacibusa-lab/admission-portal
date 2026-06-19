@@ -79,6 +79,39 @@
 @endsection
 
 @section('content')
+
+{{-- ── Batch Selector Overlay ── --}}
+@if(!empty($availableBatches) && empty($selectedBatch))
+<div class="row justify-content-center animate__animated animate__fadeIn" style="margin-top: 2rem; margin-bottom: 2rem;">
+    <div class="col-12 col-md-8 col-lg-5">
+        <div class="glass-card p-4 p-md-5 text-center">
+            <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle mb-3" style="width: 72px; height: 72px;">
+                <i class="bi bi-layers fs-1"></i>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Select Exam Batch</h3>
+            <p class="text-muted mb-4">You have results from multiple exam sessions. Please select which batch you'd like to view.</p>
+
+            <form action="{{ route('public.results.select-batch') }}" method="POST">
+                @csrf
+                <div class="d-flex flex-column gap-3">
+                    @foreach($availableBatches as $batch)
+                        <button type="submit" name="batch" value="{{ $batch }}" 
+                                class="btn btn-outline-primary btn-lg fw-semibold d-flex align-items-center justify-content-center gap-2 py-3">
+                            <i class="bi bi-file-text"></i> {{ $batch }}
+                        </button>
+                    @endforeach
+                </div>
+            </form>
+
+            <hr class="my-4 text-muted opacity-25">
+            <a href="{{ route('public.results.form') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</div>
+@else
+
 @php
     $hasScores = $applicant->examScores->isNotEmpty();
     $avgScore = $hasScores ? round($applicant->examScores->avg('score'), 1) : null;
@@ -246,6 +279,23 @@
                             <span class="fw-semibold text-dark">{{ $applicant->parent_phone_number }}</span>
                         </div>
                     </div>
+                    @if(!empty($selectedBatch))
+                    <div class="col-12">
+                        <div class="p-2 bg-warning bg-opacity-10 rounded-3">
+                            <span class="text-muted d-block small text-uppercase fw-semibold" style="font-size: 0.75rem;">
+                                <i class="bi bi-layers me-1"></i> Viewing Batch
+                            </span>
+                            <span class="fw-bold text-dark">{{ $selectedBatch }}</span>
+                            <a href="{{ route('public.results.select-batch') }}?show=1" class="btn btn-sm btn-outline-warning ms-3" onclick="event.preventDefault(); document.getElementById('resetBatchForm').submit();">
+                                <i class="bi bi-arrow-repeat"></i> Switch Batch
+                            </a>
+                            <form id="resetBatchForm" action="{{ route('public.results.select-batch') }}" method="POST" class="d-none">
+                                @csrf
+                                <input type="hidden" name="batch" value="">
+                            </form>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 <!-- Scores Section -->
@@ -400,4 +450,5 @@
         </div>
     </div>
 </div>
+@endif
 @endsection

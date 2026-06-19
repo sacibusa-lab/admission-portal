@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applicant;
+use App\Models\ExamScore;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -41,6 +42,24 @@ class PublicResultController extends Controller
         // Store applicant ID in session to allow secure access to details
         session(['verified_result_applicant_id' => $applicant->id]);
 
+        // Check if applicant has scores from multiple batches (resit history)
+        $availableBatches = ExamScore::where('applicant_id', $applicant->id)
+            ->whereNotNull('exam_batch')
+            ->distinct()
+            ->pluck('exam_batch')
+            ->toArray();
+
+        // Include applicant's current batch if they have scores in it
+        $allBatches = collect($availableBatches);
+
+        // Only show selector if there are multiple distinct batches
+        if ($allBatches->count() > 1 || ($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))) {
+            session(['result_available_batches' => $allBatches->values()->toArray()]);
+            session()->forget('result_selected_batch');
+        } else {
+            session()->forget(['result_available_batches', 'result_selected_batch']);
+        }
+
         return redirect()->route('public.results.details');
     }
 
@@ -57,6 +76,19 @@ class PublicResultController extends Controller
 
         $applicant = Applicant::with(['academicSession', 'examScores.subject'])->findOrFail($applicantId);
 
+        // Check if batch selector is needed
+        $availableBatches = session('result_available_batches', []);
+        $selectedBatch = session('result_selected_batch');
+
+        // Filter scores by selected batch if provided
+        if ($selectedBatch && $applicant->examScores->isNotEmpty()) {
+            $filteredScores = $applicant->examScores->filter(function ($score) use ($selectedBatch) {
+                return $score->exam_batch === $selectedBatch || $score->exam_batch === null;
+            });
+            // Replace the relation collection with filtered scores for this request
+            $applicant->setRelation('examScores', $filteredScores);
+        }
+
         // Automatic Cutoff Check & Admission Status Update
         if ($applicant->examScores->isNotEmpty()) {
             $averageScore = $applicant->examScores->avg('score');
@@ -69,34 +101,37 @@ class PublicResultController extends Controller
             $seniorCutoff = intval(Setting::get('admission_senior_cutoff', 50));
             
             $cutoff = $isJunior ? $juniorCutoff : ($isSenior ? $seniorCutoff : 50);
-            
-            if ($averageScore >= $cutoff) {
-                // Only promote if not already admitted, rejected, or explicitly failed
-                if (!in_array($applicant->admission_status, ['Admitted', 'Rejected', 'Failed'])) {
-                    $applicant->update([
-                        'admission_status' => 'Admitted'
-                    ]);
 
-                    // Add history log
-                    \App\Models\AdmissionHistory::create([
-                        'applicant_id' => $applicant->id,
-                        'status' => 'Admitted',
-                        'officer_id' => null,
-                        'remarks' => 'Admitted automatically by passing the entrance exam score cutoff of ' . $cutoff . '%'
-                    ]);
+            $passed = $averageScore >= $cutoff;
 
-                    // Log audit
-                    \App\Helpers\AuditLogger::log('automatic_admission', [
-                        'applicant_id' => $applicant->id,
-                        'registration_number' => $applicant->registration_number,
-                        'average_score' => $averageScore,
-                        'cutoff_mark' => $cutoff
-                    ], 0);
-                }
+            // Keep the DB admission_status in sync with the dynamic cutoff result.
+            // Only "Rejected" is considered final — "Failed" can be overridden if the cutoff changes.
+            $expectedStatus = $passed ? 'Admitted' : 'Failed';
+
+            if ($applicant->admission_status !== $expectedStatus && $applicant->admission_status !== 'Rejected') {
+                $applicant->update([
+                    'admission_status' => $expectedStatus
+                ]);
+
+                \App\Models\AdmissionHistory::create([
+                    'applicant_id' => $applicant->id,
+                    'status' => $expectedStatus,
+                    'officer_id' => null,
+                    'remarks' => ($passed
+                        ? 'Admitted automatically by passing the entrance exam score cutoff of ' . $cutoff . '%'
+                        : 'Marked as Failed - average score of ' . round($averageScore, 1) . '% is below the cutoff of ' . $cutoff . '%'),
+                ]);
+
+                \App\Helpers\AuditLogger::log($passed ? 'automatic_admission' : 'automatic_failure', [
+                    'applicant_id' => $applicant->id,
+                    'registration_number' => $applicant->registration_number,
+                    'average_score' => $averageScore,
+                    'cutoff_mark' => $cutoff,
+                ], 0);
             }
         }
 
-        return view('public.result_details', compact('applicant'));
+        return view('public.result_details', compact('applicant', 'availableBatches', 'selectedBatch'));
     }
 
     /**
@@ -135,6 +170,22 @@ class PublicResultController extends Controller
     }
 
     /**
+     * Store the selected batch in session and redirect to details.
+     */
+    public function selectBatch(Request $request)
+    {
+        $applicantId = session('verified_result_applicant_id');
+        if (!$applicantId) {
+            return redirect()->route('public.results.form');
+        }
+
+        $request->validate(['batch' => 'required|string']);
+        session(['result_selected_batch' => $request->batch]);
+
+        return redirect()->route('public.results.details');
+    }
+
+    /**
      * Public registration for a resit exam.
      */
     public function registerResit($id)
@@ -165,13 +216,34 @@ class PublicResultController extends Controller
             return redirect()->back()->with('error', 'Only candidates who failed the cutoff mark can register for a resit.');
         }
 
-        // 3. Batch and DB updates
+        // 3. Batch and DB updates — keep old scores, mark them with current batch
         $currentBatch = $applicant->exam_batch ?: 'Batch A';
-        $newBatch = str_ends_with($currentBatch, ' - Resit') ? $currentBatch : $currentBatch . ' - Resit';
+
+        // Generate the next resit batch name (e.g. Batch A → Batch A-Resit → Batch A-Resit 2)
+        $newBatch = $currentBatch;
+        if (str_ends_with($currentBatch, ' - Resit')) {
+            // Already has a resit suffix — extract the number and increment
+            $parts = explode(' - Resit', $currentBatch);
+            $base = $parts[0]; // e.g. "Batch A"
+            $existingResits = Applicant::where('exam_batch', 'like', $base . ' - Resit%')
+                ->where('id', '!=', $applicant->id)
+                ->count();
+            $newBatch = $base . ' - Resit' . ($existingResits > 0 ? ' ' . ($existingResits + 1) : '');
+        } else {
+            $newBatch = $currentBatch . ' - Resit';
+        }
+
+        // Check if this specific batch name is already taken by this applicant (edge case)
+        if ($applicant->exam_batch === $newBatch) {
+            $newBatch = $currentBatch . ' - Resit ' . (mt_rand(100, 999));
+        }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($applicant, $currentBatch, $newBatch) {
-            // Delete existing scores
-            $applicant->examScores()->delete();
+            // Mark existing scores with the current batch name so they're preserved
+            $applicant->examScores()
+                ->whereNull('exam_batch')
+                ->orWhere('exam_batch', $currentBatch)
+                ->update(['exam_batch' => $currentBatch]);
 
             // Update applicant batch and reset status to Pending
             $applicant->update([

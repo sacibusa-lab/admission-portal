@@ -28,6 +28,7 @@ Route::middleware('guest')->group(function () {
 Route::get('/check-results', [PublicResultController::class, 'showForm'])->name('public.results.form');
 Route::post('/check-results', [PublicResultController::class, 'check'])->name('public.results.check');
 Route::get('/check-results/details', [PublicResultController::class, 'showDetails'])->name('public.results.details');
+Route::post('/check-results/select-batch', [PublicResultController::class, 'selectBatch'])->name('public.results.select-batch');
 Route::get('/check-results/letter/{id}', [PublicResultController::class, 'downloadLetter'])->name('public.results.letter');
 Route::post('/check-results/resit/{id}', [PublicResultController::class, 'registerResit'])->name('public.results.resit');
 
