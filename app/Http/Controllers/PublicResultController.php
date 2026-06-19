@@ -222,19 +222,22 @@ class PublicResultController extends Controller
         // 3. Batch and DB updates — keep old scores, mark them with current batch
         $currentBatch = $applicant->exam_batch ?: 'Batch A';
 
-        // Generate the next resit batch name (e.g. Batch A → Batch A - Resit → Batch A - Resit 2)
-        // Include this applicant's own batch when checking so we don't re-generate the same name
-        $base = $currentBatch;
-        $resitCount = 0;
-        if (str_ends_with($currentBatch, ' - Resit')) {
-            // Extract base by stripping the last ' - Resit' suffix and any trailing number
-            if (preg_match('/^(.+?)(?: - Resit(?: (\d+))?)?$/', $currentBatch, $m)) {
-                $base = trim($m[1]);
-                $resitCount = isset($m[2]) ? (int)$m[2] : 1;
-            }
-            $resitCount++;
+        // Generate the next resit batch name (e.g. Batch A → Batch A - Resit → Batch A - Resit 2 → ...)
+        // Use a regex to detect any existing resit suffix regardless of numbering
+        $newBatch = $currentBatch;
+        if (preg_match('/^(.+?)(?: - Resit(?: (\d+))?)?$/', $currentBatch, $m) && !empty($m[2] ?? null)) {
+            // Already has " - Resit N" — increment the number
+            $base = trim($m[1]);
+            $nextNum = (int)$m[2] + 1;
+            $newBatch = $base . ' - Resit ' . $nextNum;
+        } elseif (str_ends_with($currentBatch, ' - Resit')) {
+            // Has " - Resit" without a number → this is resit attempt #2
+            $base = trim(explode(' - Resit', $currentBatch)[0]);
+            $newBatch = $base . ' - Resit 2';
+        } else {
+            // First resit
+            $newBatch = $currentBatch . ' - Resit';
         }
-        $newBatch = $base . ' - Resit' . ($resitCount > 1 ? ' ' . $resitCount : '');
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($applicant, $currentBatch, $newBatch) {
             // Mark existing scores with the current batch name so they're preserved
