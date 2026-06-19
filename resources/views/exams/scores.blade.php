@@ -129,6 +129,7 @@
                                             <th class="py-3 text-center" style="width: 130px;">{{ $subject->name }}</th>
                                         @endforeach
                                         <th class="px-4 py-3 text-center" style="width: 120px;">Average (%)</th>
+                                        <th class="py-3 text-center" style="width: 100px;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -171,6 +172,20 @@
                                             <td class="px-4 text-center fw-bold text-secondary fs-6 row-average">
                                                 {{ $subjectsCount > 0 ? round($totalScore / $subjectsCount, 1) . '%' : '-' }}
                                             </td>
+                                            @php
+                                                $avg = $subjectsCount > 0 ? round($totalScore / $subjectsCount, 1) : 0;
+                                                $cutoff = str_starts_with($selectedClass, 'JSS') ? $juniorCutoff : $seniorCutoff;
+                                                $passed = $subjectsCount > 0 && $avg >= $cutoff;
+                                            @endphp
+                                            <td class="text-center px-3 row-status">
+                                                @if($subjectsCount > 0)
+                                                    <span class="badge fs-6 px-3 py-2 {{ $passed ? 'bg-success' : 'bg-danger' }}">
+                                                        {{ $passed ? 'PASS' : 'FAIL' }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fs-6 px-3 py-2">—</span>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -199,6 +214,12 @@
 
 @section('scripts')
 <script>
+    // Cutoff marks from settings (auto-refreshes when cutoff changes)
+    const JUNIOR_CUTOFF = {{ $juniorCutoff }};
+    const SENIOR_CUTOFF = {{ $seniorCutoff }};
+    const SELECTED_CLASS = '{{ $selectedClass }}';
+    const EFFECTIVE_CUTOFF = SELECTED_CLASS.startsWith('JSS') ? JUNIOR_CUTOFF : SENIOR_CUTOFF;
+
     // Highlight input fields on focus
     document.querySelectorAll('.score-input').forEach(input => {
         input.addEventListener('focus', function() {
@@ -217,7 +238,7 @@
         });
     });
 
-    // Calculate row average score dynamically in real-time
+    // Calculate row average and pass/fail status dynamically in real-time
     function updateRowAverage(row) {
         let total = 0;
         let count = 0;
@@ -230,6 +251,20 @@
         const averageCell = row.querySelector('.row-average');
         if (averageCell) {
             averageCell.innerText = count > 0 ? (total / count).toFixed(1) + '%' : '-';
+        }
+
+        // Update pass/fail status
+        const statusCell = row.querySelector('.row-status');
+        if (statusCell) {
+            if (count > 0) {
+                const avg = total / count;
+                const passed = avg >= EFFECTIVE_CUTOFF;
+                statusCell.innerHTML = passed
+                    ? '<span class="badge fs-6 px-3 py-2 bg-success">PASS</span>'
+                    : '<span class="badge fs-6 px-3 py-2 bg-danger">FAIL</span>';
+            } else {
+                statusCell.innerHTML = '<span class="badge bg-secondary bg-opacity-10 text-secondary fs-6 px-3 py-2">—</span>';
+            }
         }
     }
 

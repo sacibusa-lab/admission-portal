@@ -95,7 +95,12 @@ class ExamScoreController extends Controller
             $scoresMap[$score->applicant_id][$score->exam_subject_id] = $score->score;
         }
         
-        return view('exams.scores', compact('subjects', 'selectedClass', 'selectedBatch', 'applicants', 'scoresMap'));
+        return view('exams.scores', compact(
+            'subjects', 'selectedClass', 'selectedBatch', 'applicants', 'scoresMap'
+        ))->with([
+            'juniorCutoff' => (int) Setting::get('admission_junior_cutoff', 50),
+            'seniorCutoff' => (int) Setting::get('admission_senior_cutoff', 50),
+        ]);
     }
 
     /**
