@@ -86,7 +86,7 @@
                     <div class="school-title">{{ $schoolName }}</div>
                     <div class="report-subtitle">Applicants Enrollment Report</div>
                     <div class="filter-details">
-                        Filters Applied: Class: {{ $filterDetails['class'] }} | Status: {{ $filterDetails['status'] }} | Date: {{ $filterDetails['date'] }}
+                        Filters Applied: Class: {{ $filterDetails['class'] }} | Status: {{ $filterDetails['status'] }} | Session: {{ $filterDetails['session'] ?? 'All' }} | Date: {{ $filterDetails['date'] ?? ($filterDetails['date_from'] ?? 'All') }} - {{ $filterDetails['date_to'] ?? '' }}
                     </div>
                 </td>
                 <td style="text-align: right; vertical-align: bottom; font-size: 9px; color: #64748b;">
@@ -105,6 +105,7 @@
                 <th>Full Name</th>
                 <th style="width: 50px;">Gender</th>
                 <th style="width: 50px;">Class</th>
+                <th style="width: 70px;">Session</th>
                 <th style="width: 80px;">Parent Phone</th>
                 <th style="width: 90px;">Status</th>
                 <th style="width: 110px;">Date Registered</th>
@@ -118,6 +119,7 @@
                     <td><strong>{{ $applicant->full_name }}</strong></td>
                     <td>{{ $applicant->gender }}</td>
                     <td>{{ $applicant->class_applying_for }}</td>
+                    <td>{{ $applicant->academicSession?->name ?? '—' }}</td>
                     <td>{{ $applicant->parent_phone_number }}</td>
                     <td>{{ $applicant->admission_status }}</td>
                     <td>{{ $applicant->created_at->format('Y-m-d H:i') }}</td>

@@ -50,18 +50,32 @@ class ReportService
     }
 
     /**
-     * Get admission success rate (Admitted / Total Applicants).
+     * Get admission success rate based on cutoff marks.
+     * "Admitted" = applicant's total exam score ≥ class-appropriate cutoff.
+     * Changes dynamically when cutoff marks are updated in settings.
      */
     public function getSuccessRate(): array
     {
         $total = Applicant::count();
-        $admitted = Applicant::where('admission_status', 'Admitted')->count();
-        $successRate = $total > 0 ? round(($admitted / $total) * 100, 2) : 0;
+        $juniorCutoff = (int) \App\Models\Setting::get('admission_junior_cutoff', 50);
+        $seniorCutoff = (int) \App\Models\Setting::get('admission_senior_cutoff', 50);
+
+        $meetsCutoff = Applicant::withSum('examScores', 'score')
+            ->get()
+            ->filter(function ($app) use ($juniorCutoff, $seniorCutoff) {
+                $cutoff = str_starts_with($app->class_applying_for, 'JSS') ? $juniorCutoff : $seniorCutoff;
+                return ($app->exam_scores_sum_score ?? 0) >= $cutoff;
+            })
+            ->count();
+
+        $successRate = $total > 0 ? round(($meetsCutoff / $total) * 100, 2) : 0;
 
         return [
             'total' => $total,
-            'admitted' => $admitted,
-            'rate' => $successRate
+            'admitted' => $meetsCutoff,
+            'rate' => $successRate,
+            'junior_cutoff' => $juniorCutoff,
+            'senior_cutoff' => $seniorCutoff,
         ];
     }
 
@@ -85,6 +99,46 @@ class ReportService
             ->groupBy('admission_status')
             ->get()
             ->toArray();
+    }
+
+    /**
+     * Get gender distribution of applicants.
+     */
+    public function getGenderBreakdown(): array
+    {
+        return Applicant::select('gender', DB::raw('count(*) as total'))
+            ->whereNotNull('gender')
+            ->groupBy('gender')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Get overview counts for stats cards.
+     * 'admitted' is dynamically computed from cutoff marks.
+     */
+    public function getOverviewStats(): array
+    {
+        $juniorCutoff = (int) \App\Models\Setting::get('admission_junior_cutoff', 50);
+        $seniorCutoff = (int) \App\Models\Setting::get('admission_senior_cutoff', 50);
+
+        $meetsCutoff = Applicant::withSum('examScores', 'score')
+            ->get()
+            ->filter(function ($app) use ($juniorCutoff, $seniorCutoff) {
+                $cutoff = str_starts_with($app->class_applying_for, 'JSS') ? $juniorCutoff : $seniorCutoff;
+                return ($app->exam_scores_sum_score ?? 0) >= $cutoff;
+            })
+            ->count();
+
+        return [
+            'total_applicants' => Applicant::count(),
+            'admitted' => $meetsCutoff,
+            'junior_cutoff' => $juniorCutoff,
+            'senior_cutoff' => $seniorCutoff,
+            'pending' => Applicant::whereIn('admission_status', ['Pending', 'Under Review'])->count(),
+            'rejected' => Applicant::where('admission_status', 'Rejected')->count(),
+            'exam_scheduled' => Applicant::where('admission_status', 'Exam Scheduled')->count(),
+        ];
     }
 
     /**

@@ -127,4 +127,37 @@ class Applicant extends Model
     {
         return $this->hasMany(ExamScore::class);
     }
+
+    // ── Cutoff-based admission helpers ──
+
+    /**
+     * Get the total exam score across all subjects.
+     */
+    public function getTotalExamScoreAttribute(): int
+    {
+        return (int) ($this->exam_scores_sum_score ?? $this->examScores()->sum('score'));
+    }
+
+    /**
+     * Determine whether this applicant meets the cutoff mark
+     * based on their class (Junior vs Senior) and configured cutoff settings.
+     */
+    public function getMeetsCutoffAttribute(): bool
+    {
+        $cutoff = self::getCutoffForClass($this->class_applying_for);
+        return $this->total_exam_score >= $cutoff;
+    }
+
+    /**
+     * Get the appropriate cutoff mark for a given class name.
+     */
+    public static function getCutoffForClass(string $class): int
+    {
+        $prefix = strtoupper(substr(trim($class), 0, 3));
+        if ($prefix === 'JSS') {
+            return (int) \App\Models\Setting::get('admission_junior_cutoff', 50);
+        }
+        // Default to senior cutoff for SS, Nursery, Primary, or unknown
+        return (int) \App\Models\Setting::get('admission_senior_cutoff', 50);
+    }
 }
