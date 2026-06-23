@@ -329,11 +329,20 @@
                                         </td>
                                     </tr>
                                 @endforeach
-                                <tr class="table-light">
+                                @php
+                                    $totalScore = $applicant->examScores->sum('score');
+                                    $avgScore = round($applicant->examScores->avg('score'), 1);
+                                    $subjectsCount = $applicant->examScores->count();
+                                @endphp
+                                <tr class="table-light border-bottom-0">
+                                    <td class="py-3 px-4 fw-bold">Total Score</td>
+                                    <td class="py-3 px-4 text-center fw-bold fs-5 text-dark">
+                                        {{ $totalScore }} <small class="text-muted fw-normal">/ {{ $subjectsCount * 100 }}</small>
+                                    </td>
+                                    <td class="py-3 px-4 text-center"></td>
+                                </tr>
+                                <tr class="table-light border-top-0">
                                     <td class="py-3 px-4 fw-bold">Average Score</td>
-                                    @php
-                                        $avgScore = round($applicant->examScores->avg('score'), 1);
-                                    @endphp
                                     <td class="py-3 px-4 text-center fw-bold fs-4 {{ $avgScore >= $cutoff ? 'text-success' : 'text-danger' }}">
                                         {{ $avgScore }}%
                                     </td>
@@ -426,7 +435,7 @@
                     </a>
                     
                     <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto align-items-center">
-                        @if($displayStatus === 'Failed')
+                        @if($displayStatus === 'Failed' && !str_contains($applicant->exam_batch ?? '', 'Resit'))
                             <form action="{{ route('public.results.resit', $applicant->id) }}" method="POST" class="m-0 w-100 w-sm-auto" onsubmit="return confirm('Are you sure you want to register for a resit exam? Your current scores will be cleared, and you will be assigned to a new resit batch.')">
                                 @csrf
                                 <button type="submit" class="btn btn-danger d-flex align-items-center justify-content-center gap-2 py-2 px-4 fw-bold w-100">

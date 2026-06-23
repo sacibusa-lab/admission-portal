@@ -183,6 +183,7 @@
                 @foreach($subjects as $sub)
                     <th class="text-center" style="width: 12%;">{{ $sub->name }}</th>
                 @endforeach
+                <th style="width: 10%;" class="text-center">Total</th>
                 <th style="width: 13%;" class="text-center">Average (%)</th>
             </tr>
         </thead>
@@ -210,12 +211,15 @@
                     @endforeach
                     
                     <td class="text-center fw-bold">
+                        {{ $subjectsCount > 0 ? $totalScore : '-' }}
+                    </td>
+                    <td class="text-center fw-bold">
                         {{ $subjectsCount > 0 ? round($totalScore / $subjectsCount, 1) . '%' : '-' }}
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ 4 + count($subjects) }}" class="text-center" style="padding: 20px; color: #666666;">
+                    <td colspan="{{ 5 + count($subjects) }}" class="text-center" style="padding: 20px; color: #666666;">
                         No applicants found or registered for this class in this academic session.
                     </td>
                 </tr>

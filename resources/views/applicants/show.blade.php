@@ -307,7 +307,7 @@
                                                 <span class="badge bg-success px-3 py-2 mt-2 fs-6">PASSED</span>
                                             @elseif($average !== null)
                                                 <span class="badge bg-danger px-3 py-2 mt-2 fs-6">FAILED</span>
-                                                @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']))
+                                                @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']) && !str_contains($applicant->exam_batch ?? '', 'Resit'))
                                                     <form action="{{ route('applicants.resit', $applicant->id) }}" method="POST" class="mt-2" onsubmit="return confirm('Are you sure you want to register this applicant for a resit exam? Existing scores will be cleared.')">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold w-100 d-flex align-items-center justify-content-center gap-1">

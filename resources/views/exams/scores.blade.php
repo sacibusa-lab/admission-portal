@@ -143,6 +143,7 @@
                                         @foreach($subjects as $subject)
                                             <th class="py-3 text-center" style="width: 130px;">{{ $subject->name }}</th>
                                         @endforeach
+                                        <th class="px-4 py-3 text-center" style="width: 100px;">Total</th>
                                         <th class="px-4 py-3 text-center" style="width: 120px;">Average (%)</th>
                                         <th class="py-3 text-center" style="width: 100px;">Status</th>
                                     </tr>
@@ -184,6 +185,9 @@
                                                 </td>
                                             @endforeach
                                             
+                                            <td class="px-4 text-center fw-bold text-dark fs-6 row-total">
+                                                {{ $subjectsCount > 0 ? $totalScore : '-' }}
+                                            </td>
                                             <td class="px-4 text-center fw-bold text-secondary fs-6 row-average">
                                                 {{ $subjectsCount > 0 ? round($totalScore / $subjectsCount, 1) . '%' : '-' }}
                                             </td>
