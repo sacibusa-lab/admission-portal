@@ -49,8 +49,22 @@ class PublicResultController extends Controller
             ->pluck('exam_batch')
             ->toArray();
 
-        // Include applicant's current batch if they have scores in it
+        // Always include the applicant's current exam_batch so the selector
+        // doesn't end up empty for resit candidates whose scores were cleared
+        // or have null exam_batch (original data before batch tracking).
         $allBatches = collect($availableBatches);
+        if ($applicant->exam_batch && !$allBatches->contains($applicant->exam_batch)) {
+            $allBatches->push($applicant->exam_batch);
+        }
+
+        // Also include the base batch (e.g. "Batch A" from "Batch A - Resit")
+        // so candidates can view their original scores under the base name.
+        if ($applicant->exam_batch && str_contains($applicant->exam_batch, ' - Resit')) {
+            $baseBatch = trim(explode(' - Resit', $applicant->exam_batch)[0]);
+            if (!$allBatches->contains($baseBatch)) {
+                $allBatches->push($baseBatch);
+            }
+        }
 
         // Only show selector if there are multiple distinct batches
         if ($allBatches->count() > 1 || ($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))) {
