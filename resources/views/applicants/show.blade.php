@@ -281,11 +281,38 @@
                         <!-- Exam Results Tab -->
                         <div class="tab-pane fade" id="exams-pane" role="tabpanel" aria-labelledby="exams-tab">
                             <h6 class="fw-bold text-primary mb-3 border-bottom pb-2">Entrance Exam Scores</h6>
+
                             @php
-                                $scores = $applicant->examScores()->with('subject')->get();
+                                $scores = $applicant->examScores;
                                 $average = $scores->count() > 0 ? round($scores->average('score'), 2) : null;
                             @endphp
-                            
+
+                            {{-- ── Batch Selector ── --}}
+                            @if(!empty($availableBatches))
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-3 p-3 bg-light rounded-3 border">
+                                    <span class="text-muted fw-semibold small me-1">
+                                        <i class="bi bi-layers me-1"></i> Filter by batch:
+                                    </span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ route('applicants.show', $applicant->id) }}"
+                                           class="btn btn-sm {{ empty($selectedBatch) ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                            All Batches
+                                        </a>
+                                        @foreach($availableBatches as $batch)
+                                            <a href="{{ route('applicants.show', ['id' => $applicant->id, 'batch' => $batch]) }}"
+                                               class="btn btn-sm {{ $selectedBatch === $batch ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                                {{ $batch }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                    @if(!empty($selectedBatch))
+                                        <span class="badge bg-warning text-dark ms-2 px-3 py-2">
+                                            <i class="bi bi-eye me-1"></i> Viewing: {{ $selectedBatch }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+
                             @if($scores->isNotEmpty())
                                 <div class="row g-4 mb-4">
                                     <div class="col-12 col-md-4">
@@ -329,6 +356,7 @@
                                                 <th class="py-2">Subject Name</th>
                                                 <th class="py-2 text-end">Score (100)</th>
                                                 <th class="py-2 text-end">Status</th>
+                                                <th class="py-2 text-end">Batch</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -343,6 +371,7 @@
                                                             <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i> Fail</span>
                                                         @endif
                                                     </td>
+                                                    <td class="text-end text-muted small">{{ $score->exam_batch ?: $applicant->exam_batch ?: 'N/A' }}</td>
                                                 </tr>
                                             @empty
                                             @endforelse

@@ -205,7 +205,7 @@ class ApplicantController extends Controller
     /**
      * Display the applicant profile.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $applicant = Applicant::with(['academicSession', 'documents', 'histories.officer', 'creator', 'updater', 'examScores'])
             ->findOrFail($id);
@@ -219,7 +219,29 @@ class ApplicantController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('applicants.show', compact('applicant', 'smsLogs', 'auditLogs'));
+        // Gather all distinct exam batches this applicant has scores in
+        $availableBatches = $applicant->examScores()
+            ->whereNotNull('exam_batch')
+            ->distinct()
+            ->pluck('exam_batch')
+            ->toArray();
+
+        // Include the applicant's current batch if not already present
+        if ($applicant->exam_batch && !in_array($applicant->exam_batch, $availableBatches)) {
+            $availableBatches[] = $applicant->exam_batch;
+        }
+
+        $selectedBatch = $request->query('batch');
+
+        // If a specific batch is selected, filter scores to show only that batch
+        if ($selectedBatch && $applicant->examScores->isNotEmpty()) {
+            $filteredScores = $applicant->examScores->filter(function ($score) use ($selectedBatch) {
+                return $score->exam_batch === $selectedBatch || $score->exam_batch === null;
+            });
+            $applicant->setRelation('examScores', $filteredScores);
+        }
+
+        return view('applicants.show', compact('applicant', 'smsLogs', 'auditLogs', 'availableBatches', 'selectedBatch'));
     }
 
     /**
