@@ -242,8 +242,10 @@ class PublicResultController extends Controller
         \Illuminate\Support\Facades\DB::transaction(function () use ($applicant, $currentBatch, $newBatch) {
             // Mark existing scores with the current batch name so they're preserved
             $applicant->examScores()
-                ->whereNull('exam_batch')
-                ->orWhere('exam_batch', $currentBatch)
+                ->where(function ($q) use ($currentBatch) {
+                    $q->whereNull('exam_batch')
+                      ->orWhere('exam_batch', $currentBatch);
+                })
                 ->update(['exam_batch' => $currentBatch]);
 
             // Update applicant batch and reset status to Pending

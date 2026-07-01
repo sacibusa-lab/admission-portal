@@ -368,11 +368,30 @@ class ApplicantController extends Controller
         $applicant = Applicant::findOrFail($id);
 
         $currentBatch = $applicant->exam_batch ?: 'Batch A';
-        $newBatch = str_ends_with($currentBatch, ' - Resit') ? $currentBatch : $currentBatch . ' - Resit';
+
+        // Generate the next resit batch name (e.g. Batch A → Batch A - Resit → Batch A - Resit 2 → ...)
+        if (preg_match('/^(.+?)(?: - Resit(?: (\d+))?)?$/', $currentBatch, $m) && !empty($m[2] ?? null)) {
+            // Already has " - Resit N" — increment the number
+            $base = trim($m[1]);
+            $nextNum = (int)$m[2] + 1;
+            $newBatch = $base . ' - Resit ' . $nextNum;
+        } elseif (str_ends_with($currentBatch, ' - Resit')) {
+            // Has " - Resit" without a number → this is resit attempt #2
+            $base = trim(explode(' - Resit', $currentBatch)[0]);
+            $newBatch = $base . ' - Resit 2';
+        } else {
+            // First resit
+            $newBatch = $currentBatch . ' - Resit';
+        }
 
         DB::transaction(function () use ($applicant, $currentBatch, $newBatch) {
-            // Delete existing scores
-            $applicant->examScores()->delete();
+            // Preserve existing scores by marking them with the current batch name
+            $applicant->examScores()
+                ->where(function ($q) use ($currentBatch) {
+                    $q->whereNull('exam_batch')
+                      ->orWhere('exam_batch', $currentBatch);
+                })
+                ->update(['exam_batch' => $currentBatch]);
 
             // Update applicant batch and reset status to Pending
             $applicant->update([
