@@ -190,6 +190,14 @@
             </div>
         @endif
 
+        @if(session('info'))
+            <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                {{ session('info') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="glass-card">
             <div class="card-body p-4 p-md-5">
                 <!-- Official School Letterhead Header -->

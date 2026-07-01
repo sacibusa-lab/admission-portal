@@ -60,9 +60,11 @@ class PublicResultController extends Controller
         // Auto-select the only batch, or show the selector when multiple batches
         // exist or the applicant is in a resit cycle.
         if ($allBatches->count() === 1) {
-            // Only one batch — auto-select it, no need for a picker
+            // Only one batch — auto-select it, no need for a picker;
+            // keep available batches in session so the view can offer
+            // "Switch Batch" even when the current selection is empty.
             session(['result_selected_batch' => $allBatches->first()]);
-            session()->forget('result_available_batches');
+            session(['result_available_batches' => $allBatches->values()->toArray()]);
         } elseif ($allBatches->count() > 1 || ($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))) {
             // Multiple batches or resit candidate — show the picker
             session(['result_available_batches' => $allBatches->values()->toArray()]);
@@ -98,6 +100,14 @@ class PublicResultController extends Controller
             });
             // Replace the relation collection with filtered scores for this request
             $applicant->setRelation('examScores', $filteredScores);
+
+            // If the filtered batch has no scores, clear the selection so the
+            // view shows all scores (or the batch picker if available)
+            if ($filteredScores->isEmpty()) {
+                session()->forget('result_selected_batch');
+                $selectedBatch = null;
+                session()->flash('info', 'No scores found for this batch. Please try a different batch.');
+            }
         }
 
         // Automatic Cutoff Check & Admission Status Update
@@ -185,6 +195,7 @@ class PublicResultController extends Controller
 
     /**
      * Store the selected batch in session and redirect to details.
+     * An empty batch value resets the selection (shows the picker again).
      */
     public function selectBatch(Request $request)
     {
@@ -193,8 +204,14 @@ class PublicResultController extends Controller
             return redirect()->route('public.results.form');
         }
 
-        $request->validate(['batch' => 'required|string']);
-        session(['result_selected_batch' => $request->batch]);
+        $batch = trim($request->batch);
+
+        if (empty($batch)) {
+            // Reset — go back to the batch picker
+            session()->forget('result_selected_batch');
+        } else {
+            session(['result_selected_batch' => $batch]);
+        }
 
         return redirect()->route('public.results.details');
     }
