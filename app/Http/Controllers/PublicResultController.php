@@ -57,17 +57,14 @@ class PublicResultController extends Controller
             $allBatches->push($applicant->exam_batch);
         }
 
-        // Also include the base batch (e.g. "Batch A" from "Batch A - Resit")
-        // so candidates can view their original scores under the base name.
-        if ($applicant->exam_batch && str_contains($applicant->exam_batch, ' - Resit')) {
-            $baseBatch = trim(explode(' - Resit', $applicant->exam_batch)[0]);
-            if (!$allBatches->contains($baseBatch)) {
-                $allBatches->push($baseBatch);
-            }
-        }
-
-        // Only show selector if there are multiple distinct batches
-        if ($allBatches->count() > 1 || ($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))) {
+        // Auto-select the only batch, or show the selector when multiple batches
+        // exist or the applicant is in a resit cycle.
+        if ($allBatches->count() === 1) {
+            // Only one batch — auto-select it, no need for a picker
+            session(['result_selected_batch' => $allBatches->first()]);
+            session()->forget('result_available_batches');
+        } elseif ($allBatches->count() > 1 || ($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))) {
+            // Multiple batches or resit candidate — show the picker
             session(['result_available_batches' => $allBatches->values()->toArray()]);
             session()->forget('result_selected_batch');
         } else {
