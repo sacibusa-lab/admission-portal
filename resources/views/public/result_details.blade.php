@@ -123,13 +123,25 @@
     $seniorCutoff = intval(\App\Models\Setting::get('admission_senior_cutoff', 50));
     $cutoff = $isJunior ? $juniorCutoff : ($isSenior ? $seniorCutoff : 50);
     
+    $isResitCandidate = $applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit');
     $examPassed = $hasScores && ($avgScore >= $cutoff);
     $examFailed = $hasScores && ($avgScore < $cutoff);
 
     // Determine the final status to display
     $displayStatus = $applicant->admission_status;
     
-    if ($applicant->admission_status === 'Rejected') {
+    if ($isResitCandidate) {
+        // Resit candidates keep their current status (Pending) and don't get
+        // overridden by filtered scores (which only show failed subjects)
+        $displayStatus = $applicant->admission_status;
+        if ($displayStatus === 'Pending') {
+            $badgeClass = 'badge-pending';
+            $theme = 'secondary';
+        } else {
+            $badgeClass = 'badge-failed';
+            $theme = 'danger';
+        }
+    } elseif ($applicant->admission_status === 'Rejected') {
         $displayStatus = 'Rejected';
         $badgeClass = 'badge-rejected';
         $theme = 'danger';
@@ -307,7 +319,24 @@
                 </div>
 
                 <!-- Scores Section -->
-                <h5 class="fw-bold text-dark mb-3 border-bottom pb-2 mt-4"><i class="bi bi-file-earmark-spreadsheet-fill text-success me-2"></i>Entrance Exam Scores</h5>
+                <h5 class="fw-bold text-dark mb-3 border-bottom pb-2 mt-4">
+                    <i class="bi bi-file-earmark-spreadsheet-fill text-success me-2"></i>Entrance Exam Scores
+                    @if($isResitCandidate)
+                        <span class="badge bg-warning text-dark ms-2 px-3 py-2" style="font-size: 0.75rem;">
+                            <i class="bi bi-arrow-repeat me-1"></i> Resit — Failed Subjects Only
+                        </span>
+                    @endif
+                </h5>
+
+                @if($isResitCandidate && $applicant->examScores->isNotEmpty())
+                    <div class="alert alert-warning border-0 shadow-sm mb-4 py-3 d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                        <div>
+                            <strong class="d-block mb-1">Resit Examination Results</strong>
+                            Only subjects you failed in the previous exam are shown below. Subjects you passed (score &ge; 50) are considered completed and do not need to be retaken.
+                        </div>
+                    </div>
+                @endif
                 
                 @if($applicant->examScores->isNotEmpty())
                     <div class="table-responsive mb-4">

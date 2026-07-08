@@ -78,14 +78,35 @@ class ExamScoreController extends Controller
             $currentSessionId = $currentSession ? $currentSession->id : 1;
         }
         
-        // Get all applicants for active session, class & batch
-        $applicants = Applicant::where('academic_session_id', $currentSessionId)
+        // Get applicants for this class — those whose exam_batch matches, plus
+        // any who have scores under this batch (e.g. resit candidates whose
+        // exam_batch was changed but scores remain under the original batch).
+        $baseApplicants = Applicant::where('academic_session_id', $currentSessionId)
             ->where('class_applying_for', $selectedClass)
             ->where('exam_batch', $selectedBatch)
             ->orderBy('surname', 'asc')
             ->orderBy('first_name', 'asc')
             ->get();
-            
+
+        // Also fetch applicants who have scores under this batch but whose
+        // exam_batch has since changed (e.g. moved to a resit batch).
+        $extraApplicantIds = ExamScore::where('exam_batch', $selectedBatch)
+            ->whereIn('applicant_id', function ($sub) use ($currentSessionId, $selectedClass) {
+                $sub->select('id')
+                    ->from('applicants')
+                    ->where('academic_session_id', $currentSessionId)
+                    ->where('class_applying_for', $selectedClass);
+            })
+            ->pluck('applicant_id');
+
+        $extraApplicants = Applicant::whereIn('id', $extraApplicantIds)
+            ->where('exam_batch', '!=', $selectedBatch)
+            ->orderBy('surname', 'asc')
+            ->orderBy('first_name', 'asc')
+            ->get();
+
+        $applicants = $baseApplicants->concat($extraApplicants)->unique('id')->values();
+
         // Load existing scores for the applicants — only those matching the selected batch
         $scores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))
             ->where(function ($q) use ($selectedBatch) {
@@ -99,9 +120,47 @@ class ExamScoreController extends Controller
         foreach ($scores as $score) {
             $scoresMap[$score->applicant_id][$score->exam_subject_id] = $score->score;
         }
+
+        // ── Resit Batch Logic: Only show input fields for subjects each student failed ──
+        $isResitBatch = str_contains($selectedBatch, 'Resit');
+        $failedSubjectsMap = []; // applicant_id => [subject_id => true]
+
+        if ($isResitBatch) {
+            // Determine the original batch name by stripping the Resit suffix
+            $originalBatch = preg_replace('/\s*-\s*Resit(?:\s*\d+)?$/', '', $selectedBatch);
+            if (empty($originalBatch)) {
+                $originalBatch = $selectedBatch;
+            }
+
+            // Load scores from the original batch for all displayed applicants
+            $originalScores = ExamScore::whereIn('applicant_id', $applicants->pluck('id'))
+                ->where('exam_batch', $originalBatch)
+                ->get();
+
+            // Build a map of original scores
+            $originalScoresMap = [];
+            foreach ($originalScores as $score) {
+                $originalScoresMap[$score->applicant_id][$score->exam_subject_id] = $score->score;
+            }
+
+            // For each applicant, determine which subjects they failed (score < 50 or no score)
+            foreach ($applicants as $applicant) {
+                $originalScoresForApplicant = $originalScoresMap[$applicant->id] ?? [];
+                $allSubjectIds = $subjects->pluck('id')->toArray();
+
+                foreach ($allSubjectIds as $subjectId) {
+                    $originalScore = $originalScoresForApplicant[$subjectId] ?? null;
+                    // A subject is "failed" if score is null/missing or below 50
+                    if ($originalScore === null || $originalScore < 50) {
+                        $failedSubjectsMap[$applicant->id][$subjectId] = true;
+                    }
+                }
+            }
+        }
         
         return view('exams.scores', compact(
-            'subjects', 'selectedClass', 'selectedBatch', 'applicants', 'scoresMap'
+            'subjects', 'selectedClass', 'selectedBatch', 'applicants', 'scoresMap',
+            'isResitBatch', 'failedSubjectsMap'
         ))->with([
             'juniorCutoff' => (int) Setting::get('admission_junior_cutoff', 50),
             'seniorCutoff' => (int) Setting::get('admission_senior_cutoff', 50),

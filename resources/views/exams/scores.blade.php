@@ -114,8 +114,20 @@
                 <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-3">
                     <div>
                         <h6 class="m-0 fw-bold text-dark text-uppercase">
-                            Score Sheet: <span class="text-primary">ALL SUBJECTS</span> ({{ $selectedClass }} - {{ $selectedBatch }})
+                            Score Sheet: 
+                            @if($isResitBatch)
+                                <span class="text-warning">FAILED SUBJECTS ONLY</span>
+                            @else
+                                <span class="text-primary">ALL SUBJECTS</span>
+                            @endif
+                            ({{ $selectedClass }} - {{ $selectedBatch }})
                         </h6>
+                        @if($isResitBatch)
+                            <small class="text-muted mt-1 d-block">
+                                <i class="bi bi-info-circle me-1"></i> 
+                                Only input fields are shown for subjects each student failed (score &lt; 50). Passed subjects show a "Passed" badge.
+                            </small>
+                        @endif
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-2">
                         @if($applicants->isNotEmpty())
@@ -167,20 +179,45 @@
                                                         $totalScore += $currentScore;
                                                         $subjectsCount++;
                                                     }
+                                                    
+                                                    // For resit batches, check if this subject was failed
+                                                    $isFailedSubject = $isResitBatch && isset($failedSubjectsMap[$applicant->id][$subject->id]);
                                                 @endphp
                                                 <td class="text-center px-2">
-                                                    @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']))
-                                                        <input type="number" 
-                                                               min="0" 
-                                                               max="100" 
-                                                               class="form-control score-input text-center mx-auto" 
-                                                               name="scores[{{ $applicant->id }}][{{ $subject->id }}]" 
-                                                               value="{{ $currentScore }}" 
-                                                               placeholder="-" 
-                                                               data-subject-id="{{ $subject->id }}"
-                                                               style="max-width: 90px; height: 38px;">
+                                                    @if($isResitBatch)
+                                                        @if($isFailedSubject)
+                                                            @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']))
+                                                                <input type="number" 
+                                                                       min="0" 
+                                                                       max="100" 
+                                                                       class="form-control score-input text-center mx-auto border-warning" 
+                                                                       name="scores[{{ $applicant->id }}][{{ $subject->id }}]" 
+                                                                       value="{{ $currentScore }}" 
+                                                                       placeholder="-" 
+                                                                       data-subject-id="{{ $subject->id }}"
+                                                                       style="max-width: 90px; height: 38px;">
+                                                            @else
+                                                                <strong class="text-dark">{{ $currentScore ?? '-' }}</strong>
+                                                            @endif
+                                                        @else
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">
+                                                                <i class="bi bi-check-circle-fill me-1" style="font-size: 0.7rem;"></i> Passed
+                                                            </span>
+                                                        @endif
                                                     @else
-                                                        <strong class="text-dark">{{ $currentScore ?? '-' }}</strong>
+                                                        @if(auth()->user()->hasRole(['Super Admin', 'Admission Officer']))
+                                                            <input type="number" 
+                                                                   min="0" 
+                                                                   max="100" 
+                                                                   class="form-control score-input text-center mx-auto" 
+                                                                   name="scores[{{ $applicant->id }}][{{ $subject->id }}]" 
+                                                                   value="{{ $currentScore }}" 
+                                                                   placeholder="-" 
+                                                                   data-subject-id="{{ $subject->id }}"
+                                                                   style="max-width: 90px; height: 38px;">
+                                                        @else
+                                                            <strong class="text-dark">{{ $currentScore ?? '-' }}</strong>
+                                                        @endif
                                                     @endif
                                                 </td>
                                             @endforeach
