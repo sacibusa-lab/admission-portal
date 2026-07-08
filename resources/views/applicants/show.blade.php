@@ -280,30 +280,12 @@
 
                         <!-- Exam Results Tab -->
                         <div class="tab-pane fade" id="exams-pane" role="tabpanel" aria-labelledby="exams-tab">
-                            <h6 class="fw-bold text-primary mb-3 border-bottom pb-2">
-                                Entrance Exam Scores
-                                @if($applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit'))
-                                    <span class="badge bg-warning text-dark ms-2 px-3 py-2" style="font-size: 0.72rem;">
-                                        <i class="bi bi-arrow-repeat me-1"></i> Resit — Failed Subjects Only
-                                    </span>
-                                @endif
-                            </h6>
+                            <h6 class="fw-bold text-primary mb-3 border-bottom pb-2">Entrance Exam Scores</h6>
 
                             @php
                                 $scores = $applicant->examScores;
-                                $isResitView = $applicant->exam_batch && str_contains($applicant->exam_batch ?? '', 'Resit');
                                 $average = $scores->count() > 0 ? round($scores->average('score'), 2) : null;
                             @endphp
-
-                            @if($isResitView && $scores->isNotEmpty())
-                                <div class="alert alert-warning border-0 shadow-sm mb-4 py-3 d-flex align-items-center">
-                                    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
-                                    <div>
-                                        <strong class="d-block mb-1">Resit Candidate — Failed Subjects Only</strong>
-                                        This candidate registered for a resit. Only subjects they failed (score &lt; 50) are displayed below. Subjects they already passed are omitted.
-                                    </div>
-                                </div>
-                            @endif
 
                             {{-- ── Batch Selector ── --}}
                             @if(!empty($availableBatches))

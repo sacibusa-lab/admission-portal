@@ -241,26 +241,6 @@ class ApplicantController extends Controller
             $applicant->setRelation('examScores', $filteredScores);
         }
 
-        // ── Resit Filter: Only show failed subjects for resit candidates ──
-        $isResitCandidate = $applicant->exam_batch && str_contains($applicant->exam_batch, 'Resit');
-        if ($isResitCandidate && $applicant->examScores->isNotEmpty()) {
-            // Determine which subjects were failed: any subject where the best score < 50
-            // or where no score exists, needs retake. Subjects with a passing score (>= 50)
-            // in any batch are considered passed.
-            $passedSubjectIds = [];
-            foreach ($applicant->examScores as $score) {
-                if ($score->score >= 50) {
-                    $passedSubjectIds[$score->exam_subject_id] = true;
-                }
-            }
-
-            // Show scores only for subjects that DON'T have a passing score
-            $filteredScores = $applicant->examScores->reject(function ($score) use ($passedSubjectIds) {
-                return isset($passedSubjectIds[$score->exam_subject_id]);
-            });
-            $applicant->setRelation('examScores', $filteredScores);
-        }
-
         return view('applicants.show', compact('applicant', 'smsLogs', 'auditLogs', 'availableBatches', 'selectedBatch'));
     }
 
